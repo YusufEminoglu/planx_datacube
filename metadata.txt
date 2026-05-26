@@ -18,7 +18,7 @@ email=yusuf.eminoglu@deu.edu.tr
 
 icon=icons/icon.png
 
-qgisMinimumVersion=3.28
+qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 
 changelog=
