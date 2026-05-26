@@ -3,21 +3,18 @@
 from __future__ import annotations
 
 import os
+import math
+
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingException,
-    QgsProcessingParameterMultipleLayers,
-    QgsProcessingParameterField,
-    QgsProcessingParameterNumber,
-    QgsProcessingParameterString,
-    QgsProcessingParameterFileDestination,
-    QgsProcessingParameterEnum,
-    QgsProcessingOutputString,
-    QgsMapLayer,
-    QgsVectorLayer,
-    QgsRasterLayer,
+    QgsFeature, QgsFeatureSink, QgsField, QgsFields, QgsGeometry,
+    QgsPointXY, QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
+    QgsProcessingParameterMultipleLayers, QgsProcessingParameterField,
+    QgsProcessingParameterNumber, QgsProcessingParameterFileDestination,
+    QgsProcessingParameterEnum, QgsProcessingParameterFeatureSink,
+    QgsProcessingOutputString, QgsMapLayer, QgsVectorLayer, QgsRasterLayer,
+    QgsRectangle, QgsWkbTypes,
 )
+from qgis.PyQt.QtCore import QVariant
 
 from ..core.cube_builder import (
     build_cube_from_vector_layers,
@@ -64,6 +61,8 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
             "in-memory cube for downstream EHSA / forecasting."
         )
 
+    OUTPUT_GRID = "OUTPUT_GRID"
+
     def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterMultipleLayers(
@@ -91,6 +90,12 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
                 self.OUTPUT_NC, "Output netCDF file",
                 fileFilter="NetCDF (*.nc);;All files (*.*)",
                 optional=True,
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_GRID, "Output grid (first time step)",
+                type=QgsProcessing.SourceType.TypeVectorPolygon, optional=True,
             )
         )
         self.addOutput(
@@ -143,8 +148,47 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
                     "Install with: pip install netCDF4"
                 )
 
-        # store cube in context for downstream algorithms
-        # (pass via a temp attribute on the feedback — in production use QgsProcessingContext)
-        context.cartolab_cube = cube
+        # Build grid polygon layer for the first time step
+        result = {self.OUTPUT_INFO: summary}
 
-        return {self.OUTPUT_INFO: summary}
+        if parameters.get(self.OUTPUT_GRID):
+            # determine CRS from first layer
+            crs = layers[0].crs() if layers else None
+            out_fields = QgsFields()
+            out_fields.append(QgsField("cell_x", QVariant.Double))
+            out_fields.append(QgsField("cell_y", QVariant.Double))
+            for var_name in cube.variable_names:
+                out_fields.append(QgsField(var_name, QVariant.Double))
+
+            (sink, grid_id) = self.parameterAsSink(
+                parameters, self.OUTPUT_GRID, context,
+                out_fields, QgsWkbTypes.Polygon, crs,
+            )
+            if sink:
+                t0 = cube.time_steps[0]
+                x_coords = cube.x_coords
+                y_coords = cube.y_coords
+                res_x = x_coords[1] - x_coords[0] if len(x_coords) > 1 else grid_res
+                res_y = y_coords[1] - y_coords[0] if len(y_coords) > 1 else grid_res
+                total_cells = len(x_coords) * len(y_coords)
+                cell_count = 0
+                for yi, y in enumerate(y_coords):
+                    for xi, x in enumerate(x_coords):
+                        if feedback.isCanceled():
+                            break
+                        rect = QgsRectangle(x, y, x + res_x, y + res_y)
+                        geom = QgsGeometry.fromRect(rect)
+                        feat = QgsFeature(out_fields)
+                        feat.setGeometry(geom)
+                        attrs = [x, y]
+                        for var_name in cube.variable_names:
+                            val = cube.data[t0][var_name][yi][xi]
+                            attrs.append(val if math.isfinite(val) else None)
+                        feat.setAttributes(attrs)
+                        sink.addFeature(feat, QgsFeatureSink.FastInsert)
+                        cell_count += 1
+                        if cell_count % 500 == 0 and feedback:
+                            feedback.setProgress(int(100 * cell_count / total_cells))
+                result[self.OUTPUT_GRID] = grid_id
+
+        return result
