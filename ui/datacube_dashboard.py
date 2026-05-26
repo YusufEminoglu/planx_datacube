@@ -274,6 +274,9 @@ class DataCubeDashboard(QDialog):
         ql.addStretch()
         self.tabs.addTab(qa_tab, "Quick Actions")
 
+        # Layout tab
+        self._build_layout_tab()
+
         # Recent Runs tab
         rl_tab = QWidget()
         rl = QVBoxLayout(rl_tab)
@@ -427,6 +430,49 @@ class DataCubeDashboard(QDialog):
         self.recent_runs = []
         self._refresh_runlog()
 
+    # ── Layout Tools ──────────────────────────────────────────────────
+
+    def _build_layout_tab(self) -> None:
+        w = QWidget()
+        lyt = QVBoxLayout(w)
+        lyt.setContentsMargins(12, 12, 12, 12)
+        gb = self._make_group("Time-Slice Layout Stacker")
+        gl = QVBoxLayout(gb)
+        gl.addWidget(QLabel(
+            "Stack temporal layers in a print layout to visualize\n"
+            "spatial change over time. Select layers in order (oldest first)."))
+        self.ts_layer_list = QListWidget()
+        self.ts_layer_list.setSelectionMode(QListWidget.MultiSelection)
+        self.ts_layer_list.setMaximumHeight(120)
+        gl.addWidget(self.ts_layer_list)
+        btn_v = QPushButton("Stack Vertically")
+        btn_v.clicked.connect(lambda: self._on_time_slice_stack("vertical"))
+        gl.addWidget(btn_v)
+        btn_d = QPushButton("Stack Diagonally")
+        btn_d.clicked.connect(lambda: self._on_time_slice_stack("diagonal"))
+        gl.addWidget(btn_d)
+        lyt.addWidget(gb)
+        lyt.addStretch()
+        self.tabs.addTab(w, "Layout")
+
+    def _on_time_slice_stack(self, direction: str) -> None:
+        items = self.ts_layer_list.selectedItems()
+        if len(items) < 2:
+            QMessageBox.warning(self, "Time Slice Stack",
+                                "Select at least 2 layers (in temporal order).")
+            return
+        names = [it.text() for it in items]
+        all_layers = QgsProject.instance().mapLayers()
+        layers = [lyr for name, lyr in all_layers.items() if lyr.name() in names]
+        try:
+            from ..layout.timeslice_stacker import create_time_slice_layout
+            create_time_slice_layout(layers, stack_direction=direction,
+                                      label_time_steps=names)
+            self.iface.messageBar().pushSuccess("DataCube Lab",
+                "Time-slice layout created. Open Layout Manager to view.")
+        except Exception as exc:
+            QMessageBox.critical(self, "Layout Error", str(exc))
+
     def _on_voxel_config(self) -> None:
         """Open the 3D voxel layer configuration dialog."""
         try:
@@ -467,6 +513,11 @@ class DataCubeDashboard(QDialog):
         layers = list(QgsProject.instance().mapLayers().values())
         reg = QgsApplication.processingRegistry()
         missing = [aid for aid in REQUIRED_IDS if reg.algorithmById(aid) is None]
+
+        if hasattr(self, "ts_layer_list"):
+            self.ts_layer_list.clear()
+            for layer in layers:
+                self.ts_layer_list.addItem(layer.name())
 
         for card in self.card_widgets:
             is_ready = reg.algorithmById(card.algo_id) is not None
