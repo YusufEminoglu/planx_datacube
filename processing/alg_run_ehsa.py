@@ -5,41 +5,24 @@ from __future__ import annotations
 import math
 
 from qgis.core import (
-    QgsFeatureSink,
-    QgsFeature,
-    QgsField,
-    QgsGeometry,
-    QgsPointXY,
-    QgsRectangle,
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingException,
-    QgsProcessingParameterFeatureSink,
-    QgsProcessingParameterFeatureSource,
-    QgsProcessingParameterField,
-    QgsProcessingParameterNumber,
-    QgsProcessingParameterDefinition,
-    QgsProcessingOutputNumber,
-    QgsWkbTypes,
-    QgsVectorLayer,
+    QgsFeature, QgsFeatureSink, QgsField, QgsFields, QgsGeometry,
+    QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
+    QgsProcessingParameterFeatureSink, QgsProcessingParameterFeatureSource,
+    QgsProcessingParameterField, QgsProcessingParameterNumber,
 )
 from qgis.PyQt.QtCore import QVariant
 
 from ..core.statistics_ehsa import (
-    getis_ord_g_star,
-    mann_kendall_test,
-    classify_ehsa_pattern,
-    EHSA_LABELS,
+    getis_ord_g_star, mann_kendall_test, classify_ehsa_pattern, EHSA_LABELS,
 )
 
 
 class RunEHSAAlgorithm(QgsProcessingAlgorithm):
     INPUT = "INPUT"
+    ID_FIELD = "ID_FIELD"
     TIME_FIELD = "TIME_FIELD"
     VALUE_FIELD = "VALUE_FIELD"
-    ID_FIELD = "ID_FIELD"
     P_THRESHOLD = "P_THRESHOLD"
-    N_CLASSES = "N_CLASSES"
     OUTPUT = "OUTPUT"
 
     def name(self) -> str:
@@ -59,47 +42,30 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
 
     def shortHelpString(self) -> str:
         return (
-            "Perform Emerging Hot Spot Analysis on panel data (vector layer with "
-            "multiple time steps per spatial unit).\n\n"
-            "For each spatial unit, the algorithm:\n"
-            "  1. Computes Getis-Ord Gi* z-scores at each time step\n"
-            "  2. Runs the Mann-Kendall trend test on the z-score series\n"
-            "  3. Classifies the unit into one of 17 spatiotemporal patterns\n"
-            "     (New, Consecutive, Intensifying, Persistent, Diminishing, "
-            "Sporadic, Oscillating, Historical — Hot or Cold)\n\n"
-            "Input must be a point or polygon layer with numeric time, unique ID, "
-            "and value fields."
+            "Perform Emerging Hot Spot Analysis on panel data.\n\n"
+            "Classifies each spatial unit into one of 17 patterns using "
+            "Getis-Ord Gi* z-scores and Mann-Kendall trend test.\n"
+            "Output: one row per location with ehsa_code (0-16), "
+            "ehsa_label, mk_tau, mk_p_value, mk_slope."
         )
 
     def initAlgorithm(self, config=None):
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.INPUT, "Input panel data layer",
-                [QgsProcessing.TypeVectorAnyGeometry],
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterField(self.ID_FIELD, "Location ID field",
-                                         parentLayerParameterName=self.INPUT)
-        )
-        self.addParameter(
-            QgsProcessingParameterField(self.TIME_FIELD, "Time step field (numeric: year, period index...)",
-                                         parentLayerParameterName=self.INPUT,
-                                         type=QgsProcessingParameterField.Numeric)
-        )
-        self.addParameter(
-            QgsProcessingParameterField(self.VALUE_FIELD, "Value field",
-                                         parentLayerParameterName=self.INPUT,
-                                         type=QgsProcessingParameterField.Numeric)
-        )
-        self.addParameter(
-            QgsProcessingParameterNumber(self.P_THRESHOLD, "Significance threshold (p-value)",
-                                          type=QgsProcessingParameterNumber.Double,
-                                          defaultValue=0.05, minValue=0.001, maxValue=0.2)
-        )
-        self.addParameter(
-            QgsProcessingParameterFeatureSink(self.OUTPUT, "EHSA classified output")
-        )
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.INPUT, "Input panel data layer", [QgsProcessing.TypeVectorAnyGeometry]))
+        self.addParameter(QgsProcessingParameterField(
+            self.ID_FIELD, "Location ID field", parentLayerParameterName=self.INPUT))
+        self.addParameter(QgsProcessingParameterField(
+            self.TIME_FIELD, "Time step field (numeric)", parentLayerParameterName=self.INPUT,
+            type=QgsProcessingParameterField.Numeric))
+        self.addParameter(QgsProcessingParameterField(
+            self.VALUE_FIELD, "Value field", parentLayerParameterName=self.INPUT,
+            type=QgsProcessingParameterField.Numeric))
+        self.addParameter(QgsProcessingParameterNumber(
+            self.P_THRESHOLD, "Significance threshold (p-value)",
+            type=QgsProcessingParameterNumber.Double,
+            defaultValue=0.05, minValue=0.001, maxValue=0.2))
+        self.addParameter(QgsProcessingParameterFeatureSink(
+            self.OUTPUT, "EHSA classified output"))
 
     def processAlgorithm(self, parameters, context, feedback):
         source = self.parameterAsSource(parameters, self.INPUT, context)
@@ -108,64 +74,75 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
         value_field = self.parameterAsString(parameters, self.VALUE_FIELD, context)
         p_threshold = self.parameterAsDouble(parameters, self.P_THRESHOLD, context)
 
-        # Organise data: {location_id: {time_step: value}}
+        # Organise: {location_id: {time_step: value}}
         loc_times: dict = {}
-        time_steps = set()
-        location_ids = set()
+        time_steps: set = set()
+        location_ids: set = set()
 
         for feat in source.getFeatures():
-            loc_id = feat[id_field]
-            t = int(float(feat[time_field]))
-            val = feat[value_field]
-            if val is None or not math.isfinite(float(val)):
+            loc_id = str(feat[id_field])
+            raw_t = feat[time_field]
+            raw_v = feat[value_field]
+            if raw_t is None or raw_v is None:
+                continue
+            try:
+                t = int(float(raw_t))
+                v = float(raw_v)
+            except (ValueError, TypeError):
+                continue
+            if not math.isfinite(v):
                 continue
             location_ids.add(loc_id)
             time_steps.add(t)
-            loc_times.setdefault(loc_id, {})[t] = float(val)
+            loc_times.setdefault(loc_id, {})[t] = v
 
         time_sorted = sorted(time_steps)
         loc_sorted = sorted(location_ids)
 
         if len(time_sorted) < 3:
-            raise QgsProcessingException(f"At least 3 time steps required (got {len(time_sorted)}).")
+            raise QgsProcessingException(f"Need >= 3 time steps (got {len(time_sorted)}).")
         if len(loc_sorted) < 2:
-            raise QgsProcessingException("At least 2 spatial units required.")
+            raise QgsProcessingException("Need >= 2 spatial units.")
 
-        feedback.pushInfo(
-            f"EHSA: {len(loc_sorted)} locations × {len(time_sorted)} time steps"
-        )
+        feedback.pushInfo(f"EHSA: {len(loc_sorted)} locations x {len(time_sorted)} steps")
 
-        # Build z-score matrix: z_scores_by_time[t][loc]
-        z_scores_by_time = []
+        # Getis-Ord Gi* per time step
+        z_by_t = []
         for t in time_sorted:
-            values = [loc_times.get(loc, {}).get(t, 0.0) for loc in loc_sorted]
-            z = getis_ord_g_star(values)
-            z_scores_by_time.append(z)
+            vals = [loc_times.get(loc, {}).get(t, 0.0) for loc in loc_sorted]
+            z_by_t.append(getis_ord_g_star(vals))
 
-        # Classify patterns
-        patterns = classify_ehsa_pattern(z_scores_by_time, p_threshold)
+        # Classify
+        patterns = classify_ehsa_pattern(z_by_t, p_threshold)
 
-        feedback.pushInfo(f"Classified {len(patterns)} locations into EHSA patterns.")
-
-        # Also compute Mann-Kendall per location
+        # Mann-Kendall per location
         mk_results = {}
         for i, loc in enumerate(loc_sorted):
             series = [loc_times.get(loc, {}).get(t, 0.0) for t in time_sorted]
-            tau, p_val, slope = mann_kendall_test(series)
-            mk_results[loc] = (tau, p_val, slope)
+            mk_results[loc] = mann_kendall_test(series)
 
-        # Build output
-        (sink, dest_id) = self.parameterAsSink(
-            parameters, self.OUTPUT, context,
-            source.fields(), source.wkbType(), source.sourceCrs(),
-        )
-
-        # collapse input to one row per location (use first geometry per location)
+        # Collect geometry per location
         loc_geom = {}
         for feat in source.getFeatures():
-            g = feat.geometry()
-            if g and not g.isEmpty():
-                loc_geom.setdefault(feat[id_field], g)
+            loc_id = str(feat[id_field])
+            if loc_id not in loc_geom:
+                g = feat.geometry()
+                if g and not g.isEmpty():
+                    loc_geom[loc_id] = g
+
+        # Build output schema
+        out_fields = QgsFields()
+        out_fields.append(QgsField("location_id", QVariant.String))
+        out_fields.append(QgsField("ehsa_code", QVariant.Int))
+        out_fields.append(QgsField("ehsa_label", QVariant.String))
+        out_fields.append(QgsField("mk_tau", QVariant.Double))
+        out_fields.append(QgsField("mk_p_value", QVariant.Double))
+        out_fields.append(QgsField("mk_slope", QVariant.Double))
+
+        (sink, dest_id) = self.parameterAsSink(
+            parameters, self.OUTPUT, context,
+            out_fields, source.wkbType(), source.sourceCrs(),
+        )
 
         total = len(loc_sorted)
         for i, loc in enumerate(loc_sorted):
@@ -174,17 +151,18 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
             pattern = patterns[i]
             tau, p_mk, slope = mk_results[loc]
 
-            feat = QgsFeature()
+            feat = QgsFeature(out_fields)
             feat.setGeometry(loc_geom.get(loc, QgsGeometry()))
             feat.setAttributes([
-                loc,                      # id
-                pattern,                  # ehsa_code
-                EHSA_LABELS[pattern],     # ehsa_label
-                tau,                      # mk_tau
-                p_mk,                     # mk_p_value
-                slope,                    # mk_slope
+                loc,
+                pattern,
+                EHSA_LABELS.get(pattern, "Unknown"),
+                round(tau, 6),
+                round(p_mk, 6),
+                round(slope, 6),
             ])
             sink.addFeature(feat, QgsFeatureSink.FastInsert)
             feedback.setProgress(int(100 * i / total))
 
+        feedback.pushInfo(f"EHSA complete: {total} locations classified.")
         return {self.OUTPUT: dest_id}

@@ -5,18 +5,11 @@ from __future__ import annotations
 import math
 
 from qgis.core import (
-    QgsFeatureSink,
-    QgsFeature,
-    QgsField,
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingException,
-    QgsProcessingParameterFeatureSink,
-    QgsProcessingParameterFeatureSource,
-    QgsProcessingParameterField,
-    QgsProcessingParameterNumber,
+    QgsFeature, QgsFeatureSink, QgsField, QgsFields, QgsGeometry,
+    QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
+    QgsProcessingParameterFeatureSink, QgsProcessingParameterFeatureSource,
+    QgsProcessingParameterField, QgsProcessingParameterNumber,
     QgsProcessingParameterEnum,
-    QgsWkbTypes,
 )
 from qgis.PyQt.QtCore import QVariant
 
@@ -33,7 +26,7 @@ class ForecastAlgorithm(QgsProcessingAlgorithm):
     OUTPUT = "OUTPUT"
 
     METHODS = [
-        ("Auto (ARIMA → Random Forest → Exponential)", "auto"),
+        ("Auto (ARIMA -> RF -> Exponential)", "auto"),
         ("ARIMA", "arima"),
         ("Random Forest", "random_forest"),
         ("Exponential Smoothing", "exponential"),
@@ -56,48 +49,32 @@ class ForecastAlgorithm(QgsProcessingAlgorithm):
 
     def shortHelpString(self) -> str:
         return (
-            "Forecast future values for each spatial unit using the selected "
-            "time-series method.\n\n"
-            "Each unique location ID's value series is modelled independently. "
-            "Auto mode tries ARIMA first, falls back to Random Forest, then "
-            "exponential smoothing.\n\n"
-            "Output contains one row per location with geometry, forecast values, "
+            "Forecast future values per location using the selected method.\n\n"
+            "Auto mode tries ARIMA first, then Random Forest, then Exponential "
+            "Smoothing. Output: one row per location with forecast columns "
             "and the method actually used."
         )
 
     def initAlgorithm(self, config=None):
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.INPUT, "Input panel data layer",
-                [QgsProcessing.TypeVectorAnyGeometry],
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterField(self.ID_FIELD, "Location ID field",
-                                         parentLayerParameterName=self.INPUT)
-        )
-        self.addParameter(
-            QgsProcessingParameterField(self.TIME_FIELD, "Time step field (numeric)",
-                                         parentLayerParameterName=self.INPUT,
-                                         type=QgsProcessingParameterField.Numeric)
-        )
-        self.addParameter(
-            QgsProcessingParameterField(self.VALUE_FIELD, "Value field to forecast",
-                                         parentLayerParameterName=self.INPUT,
-                                         type=QgsProcessingParameterField.Numeric)
-        )
-        self.addParameter(
-            QgsProcessingParameterNumber(self.STEPS_AHEAD, "Forecast steps ahead",
-                                          type=QgsProcessingParameterNumber.Integer,
-                                          defaultValue=5, minValue=1, maxValue=50)
-        )
-        self.addParameter(
-            QgsProcessingParameterEnum(self.METHOD, "Forecast method",
-                                        options=[m[0] for m in self.METHODS], defaultValue=0)
-        )
-        self.addParameter(
-            QgsProcessingParameterFeatureSink(self.OUTPUT, "Forecast output")
-        )
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            self.INPUT, "Input panel data layer", [QgsProcessing.TypeVectorAnyGeometry]))
+        self.addParameter(QgsProcessingParameterField(
+            self.ID_FIELD, "Location ID field", parentLayerParameterName=self.INPUT))
+        self.addParameter(QgsProcessingParameterField(
+            self.TIME_FIELD, "Time step field (numeric)", parentLayerParameterName=self.INPUT,
+            type=QgsProcessingParameterField.Numeric))
+        self.addParameter(QgsProcessingParameterField(
+            self.VALUE_FIELD, "Value field to forecast", parentLayerParameterName=self.INPUT,
+            type=QgsProcessingParameterField.Numeric))
+        self.addParameter(QgsProcessingParameterNumber(
+            self.STEPS_AHEAD, "Forecast steps ahead",
+            type=QgsProcessingParameterNumber.Integer,
+            defaultValue=5, minValue=1, maxValue=50))
+        self.addParameter(QgsProcessingParameterEnum(
+            self.METHOD, "Forecast method",
+            options=[m[0] for m in self.METHODS], defaultValue=0))
+        self.addParameter(QgsProcessingParameterFeatureSink(
+            self.OUTPUT, "Forecast output"))
 
     def processAlgorithm(self, parameters, context, feedback):
         source = self.parameterAsSource(parameters, self.INPUT, context)
@@ -108,28 +85,36 @@ class ForecastAlgorithm(QgsProcessingAlgorithm):
         method_idx = self.parameterAsEnum(parameters, self.METHOD, context)
         method = self.METHODS[method_idx][1]
 
-        # organise data
+        # Organise: {loc_id: {time: value}}
         loc_series: dict = {}
-        loc_geom: dict = {}
+        loc_geom = {}
         for feat in source.getFeatures():
-            loc_id = feat[id_field]
-            t = int(float(feat[time_field]))
-            val = feat[value_field]
-            if val is None or not math.isfinite(float(val)):
+            loc_id = str(feat[id_field])
+            raw_t = feat[time_field]
+            raw_v = feat[value_field]
+            if raw_t is None or raw_v is None:
                 continue
-            loc_series.setdefault(loc_id, {})[t] = float(val)
+            try:
+                t = int(float(raw_t))
+                v = float(raw_v)
+            except (ValueError, TypeError):
+                continue
+            if not math.isfinite(v):
+                continue
+            loc_series.setdefault(loc_id, {})[t] = v
             if loc_id not in loc_geom:
                 g = feat.geometry()
                 if g and not g.isEmpty():
                     loc_geom[loc_id] = g
 
         if not loc_series:
-            raise QgsProcessingException("No valid data found.")
+            raise QgsProcessingException("No valid panel data found.")
 
-        # Build output fields
-        out_fields = source.fields()
+        # Build output schema: location_id + forecast columns + method
+        out_fields = QgsFields()
+        out_fields.append(QgsField("location_id", QVariant.String))
         for s in range(1, steps_ahead + 1):
-            out_fields.append(QgsField(f"forecast_t+{s}", QVariant.Double))
+            out_fields.append(QgsField(f"forecast_t{s}", QVariant.Double))
         out_fields.append(QgsField("forecast_method", QVariant.String))
 
         (sink, dest_id) = self.parameterAsSink(
@@ -141,16 +126,14 @@ class ForecastAlgorithm(QgsProcessingAlgorithm):
         for i, (loc_id, time_map) in enumerate(loc_series.items()):
             if feedback.isCanceled():
                 break
-
-            # sort by time and extract series
             sorted_times = sorted(time_map.keys())
             series = [time_map[t] for t in sorted_times]
 
             forecast, used_method = forecast_cell_series(series, method, steps_ahead)
 
-            feat = QgsFeature()
-            feat.setGeometry(loc_geom.get(loc_id, source.getFeature(0).geometry()))
-            attrs = [loc_id] + forecast + [used_method]
+            feat = QgsFeature(out_fields)
+            feat.setGeometry(loc_geom.get(loc_id, QgsGeometry()))
+            attrs = [str(loc_id)] + [round(float(v), 6) for v in forecast] + [str(used_method)]
             feat.setAttributes(attrs)
             sink.addFeature(feat, QgsFeatureSink.FastInsert)
             feedback.setProgress(int(100 * i / total))
