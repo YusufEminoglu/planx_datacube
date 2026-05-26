@@ -6,6 +6,7 @@ from qgis.PyQt.QtWidgets import (
     QDockWidget, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QComboBox, QSpinBox, QDoubleSpinBox,
     QGroupBox, QListWidget, QListWidgetItem, QCheckBox,
+    QTextEdit, QMessageBox,
 )
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QFont
@@ -28,6 +29,7 @@ class DataCubeDock(QDockWidget):
         self._build_cube_tab()
         self._build_ehsa_tab()
         self._build_forecast_tab()
+        self._build_setup_tab()
 
     def _make_group(self, title: str) -> QGroupBox:
         gb = QGroupBox(title)
@@ -160,6 +162,87 @@ class DataCubeDock(QDockWidget):
         lyt.addWidget(gb)
         lyt.addStretch()
         self.tabs.addTab(w, "Forecast")
+
+    # -------------------------------------------------------------------
+    # SETUP TAB — dependency checker & installer
+    # -------------------------------------------------------------------
+    def _build_setup_tab(self) -> None:
+        w = QWidget()
+        lyt = QVBoxLayout(w)
+
+        gb = self._make_group("Environment Setup")
+        gl = QVBoxLayout(gb)
+
+        gl.addWidget(QLabel("DataCube Lab needs several Python data-science packages.\n"
+                             "Check what's missing and install with one click."))
+
+        self.setup_status = QTextEdit()
+        self.setup_status.setReadOnly(True)
+        self.setup_status.setMaximumHeight(300)
+        self.setup_status.setStyleSheet(
+            "font-family: 'IBM Plex Mono', Consolas, monospace; font-size: 11px;"
+        )
+        gl.addWidget(self.setup_status)
+
+        btn_row = QHBoxLayout()
+        btn_check = QPushButton("Check Dependencies")
+        btn_check.clicked.connect(self._on_check_deps)
+        btn_check.setStyleSheet(
+            "QPushButton { background: #3b82f6; color: white; padding: 6px 12px; border-radius: 4px; }"
+        )
+        btn_row.addWidget(btn_check)
+
+        btn_install = QPushButton("Install Missing (pip)")
+        btn_install.clicked.connect(self._on_install_deps)
+        btn_install.setStyleSheet(
+            "QPushButton { background: #22c55e; color: white; padding: 6px 12px; border-radius: 4px; }"
+        )
+        btn_row.addWidget(btn_install)
+        gl.addLayout(btn_row)
+
+        lyt.addWidget(gb)
+        lyt.addStretch()
+        self.tabs.addTab(w, "Setup")
+
+        # auto-check on open
+        self._on_check_deps()
+
+    def _on_check_deps(self) -> None:
+        from ..core.dependency_manager import check_packages, get_status_report, DATA_CUBE_DEPS
+        report = get_status_report(DATA_CUBE_DEPS, "DataCube Lab Dependencies")
+        self.setup_status.setPlainText(report)
+
+    def _on_install_deps(self) -> None:
+        from ..core.dependency_manager import check_packages, install_packages, DATA_CUBE_DEPS
+        _, missing_req, missing_opt = check_packages(DATA_CUBE_DEPS)
+        all_missing = missing_req + missing_opt
+
+        if not all_missing:
+            QMessageBox.information(self, "DataCube Setup", "All dependencies are already installed.")
+            return
+
+        msg = ("The following packages will be installed:\n\n"
+               f"{chr(10).join('  - ' + p for p in all_missing)}\n\n"
+               "This may take several minutes for large packages (scikit-learn, statsmodels).\n"
+               "QGIS may need to restart afterwards.\n\n"
+               "Continue?")
+        reply = QMessageBox.question(
+            self, "Install Dependencies", msg,
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        self.setup_status.setPlainText("Installing packages... this may take a few minutes.\n")
+        ok, output = install_packages(all_missing)
+        self.setup_status.append(output)
+
+        if ok:
+            self.setup_status.append("\nDone. Please restart QGIS for changes to take effect.")
+            self.iface.messageBar().pushSuccess("DataCube Lab", "Dependencies installed. Restart QGIS recommended.")
+        else:
+            self.setup_status.append("\nInstallation had errors. See message above.")
+            self.iface.messageBar().pushCritical("DataCube Lab", "Dependency installation failed.")
 
     # -------------------------------------------------------------------
     # Helpers
