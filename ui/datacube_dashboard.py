@@ -265,6 +265,7 @@ class DataCubeDashboard(QDialog):
             ("Build Data Cube", lambda: self._run_algorithm("planx_datacube:create_data_cube", "Data Cube")),
             ("Run EHSA (Emerging Hot Spots)", lambda: self._run_algorithm("planx_datacube:emerging_hot_spot_analysis", "EHSA")),
             ("Run Time-Series Forecast", lambda: self._run_algorithm("planx_datacube:time_series_forecast", "Forecast")),
+            ("Configure 3D Voxel Layer", self._on_voxel_config),
         ]
         for label, fn in quick:
             b = QPushButton(label)
@@ -425,6 +426,40 @@ class DataCubeDashboard(QDialog):
     def _clear_runlog(self) -> None:
         self.recent_runs = []
         self._refresh_runlog()
+
+    def _on_voxel_config(self) -> None:
+        """Open the 3D voxel layer configuration dialog."""
+        try:
+            from ..ui.voxel_config_dialog import VoxelConfigDialog
+            dlg = VoxelConfigDialog(self)
+            if dlg.exec():
+                config = dlg.get_config()
+                self.iface.messageBar().pushInfo(
+                    "DataCube Lab",
+                    f"Voxel config: {config['variable']} @ {config['nc_path']}"
+                )
+        except Exception as exc:
+            QMessageBox.critical(self, "Voxel Config Error", str(exc))
+
+    def _on_copy_diagnostics(self) -> None:
+        """Copy project diagnostics to clipboard."""
+        from ..core.dependency_manager import check_packages, DATA_CUBE_DEPS
+        avail, miss_req, miss_opt = check_packages(DATA_CUBE_DEPS)
+        layers = list(QgsProject.instance().mapLayers().values())
+        reg = QgsApplication.processingRegistry()
+        missing = [aid for aid in REQUIRED_IDS if reg.algorithmById(aid) is None]
+        txt = (
+            "PlanX DataCube Lab — Project Diagnostics\n"
+            "========================================\n"
+            f"QGIS layers: {len(layers)}\n"
+            f"Algorithms ready: {len(REQUIRED_IDS) - len(missing)}/{len(REQUIRED_IDS)}\n"
+            f"Missing: {', '.join(missing) if missing else 'None'}\n"
+            f"Packages OK: {', '.join(avail)}\n"
+            f"Packages missing (required): {', '.join(miss_req) if miss_req else 'None'}\n"
+            f"Packages missing (optional): {', '.join(miss_opt) if miss_opt else 'None'}\n"
+        )
+        QApplication.clipboard().setText(txt)
+        self.iface.messageBar().pushSuccess("DataCube Lab", "Diagnostics copied to clipboard.")
 
     # ── System health / refresh ──────────────────────────────────────
 
