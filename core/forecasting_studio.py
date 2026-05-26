@@ -17,6 +17,11 @@ from typing import List, Optional, Tuple
 # Pure-Python exponential smoothing
 # ---------------------------------------------------------------------------
 
+def _clean_series(series):
+    """Filter None, NaN, inf from a series returning float list."""
+    return [float(v) for v in series if v is not None and math.isfinite(float(v))]
+
+
 def exponential_smoothing(
     series: List[float],
     alpha: float = 0.3,
@@ -27,7 +32,7 @@ def exponential_smoothing(
 
     Returns `steps_ahead` forecast values + the fitted series.
     """
-    clean = [v for v in series if math.isfinite(v)]
+    clean = _clean_series(series)
     if len(clean) < 2:
         return [clean[-1] if clean else 0.0] * steps_ahead
 
@@ -57,7 +62,7 @@ def arima_forecast(
 
     Returns (forecast_values, method_name).
     """
-    clean = [v for v in series if math.isfinite(v)]
+    clean = _clean_series(series)
     if len(clean) < 8:
         return exponential_smoothing(clean, steps_ahead=steps_ahead), "exponential_smoothing"
 
@@ -90,7 +95,7 @@ def random_forest_forecast(
     Converts the series into supervised (X, y) pairs using a lag window,
     fits a RandomForestRegressor, and recursively forecasts.
     """
-    clean = [v for v in series if math.isfinite(v)]
+    clean = _clean_series(series)
     if len(clean) < lookback + 5:
         return exponential_smoothing(clean, steps_ahead=steps_ahead), "exponential_smoothing"
 
@@ -152,7 +157,7 @@ def forecast_cell_series(
     -------
     (forecast_values, method_used)
     """
-    clean = [v for v in series if math.isfinite(v)]
+    clean = _clean_series(series)
     if not clean:
         return [0.0] * steps_ahead, "none"
     if len(clean) < 2:
