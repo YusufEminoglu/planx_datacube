@@ -29,6 +29,7 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QListWidget,
     QMessageBox,
+    QAbstractItemView,
     QScrollArea,
     QTabWidget,
     QTextBrowser,
@@ -169,7 +170,7 @@ class DataCubeDashboard(QDialog):
 
     def _make_group(self, title: str) -> QGroupBox:
         gb = QGroupBox(title)
-        gb.setFont(QFont("Inter, Segoe UI", 9, QFont.Bold))
+        gb.setFont(QFont("Inter, Segoe UI", 9, QFont.Weight.Bold))
         gb.setStyleSheet(
             "QGroupBox { border: 1px solid #bbb; border-radius: 6px; "
             "margin-top: 8px; padding: 8px; }"
@@ -454,7 +455,9 @@ class DataCubeDashboard(QDialog):
             "Stack temporal layers in a print layout to visualize\n"
             "spatial change over time. Select layers in order (oldest first)."))
         self.ts_layer_list = QListWidget()
-        self.ts_layer_list.setSelectionMode(QListWidget.MultiSelection)
+        self.ts_layer_list.setSelectionMode(
+            QAbstractItemView.SelectionMode.MultiSelection
+        )
         self.ts_layer_list.setMaximumHeight(120)
         gl.addWidget(self.ts_layer_list)
         btn_v = QPushButton("Stack Vertically")
@@ -619,8 +622,13 @@ class DataCubeDashboard(QDialog):
             + "\n\nThis may take several minutes (scikit-learn, statsmodels are large).\n"
             "QGIS restart recommended afterwards.\n\nContinue?"
         )
-        if QMessageBox.question(self, "Install Dependencies", msg,
-                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+        if QMessageBox.question(
+            self,
+            "Install Dependencies",
+            msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        ) != QMessageBox.StandardButton.Yes:
             return
         self.setup_status.setPlainText("Installing... this may take a few minutes.\n")
         ok, output = install_packages(all_missing)

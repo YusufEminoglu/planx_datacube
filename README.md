@@ -45,7 +45,7 @@ Then:
 
 | Requirement | Value |
 |-------------|-------|
-| QGIS minimum | 3.28 |
+| QGIS minimum | 3.34 |
 | QGIS maximum | 4.99 |
 | Python | 3.9+ |
 | License | GPL-3.0 |

@@ -16,8 +16,6 @@ from qgis.PyQt.QtWidgets import (
     QLabel, QPushButton, QComboBox, QSpinBox, QDoubleSpinBox,
     QCheckBox, QDialogButtonBox, QFileDialog, QMessageBox,
 )
-from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsProject, QgsMapLayer
 
 
 class VoxelConfigDialog(QDialog):
@@ -72,7 +70,10 @@ class VoxelConfigDialog(QDialog):
         main_lyt.addLayout(form)
 
         # buttons
-        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        btn_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
+        )
         btn_box.accepted.connect(self._accept)
         btn_box.rejected.connect(self.reject)
         main_lyt.addWidget(btn_box)
