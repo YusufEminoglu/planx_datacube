@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Tuple
 from qgis.core import (
     QgsVectorLayer, QgsRasterLayer, QgsFeature, QgsGeometry,
     QgsRectangle, QgsPointXY, QgsField, QgsFields, QgsFeatureSink,
-    QgsProcessingFeedback,
+    QgsProcessingFeedback, QgsSpatialIndex,
 )
 from qgis.PyQt.QtCore import QVariant
 
