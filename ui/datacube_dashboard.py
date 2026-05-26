@@ -393,7 +393,23 @@ class DataCubeDashboard(QDialog):
     # ── Algorithm execution ──────────────────────────────────────────
 
     def _run_algorithm(self, algo_id: str, label: str) -> None:
-        processing.execAlgorithmDialog(algo_id)
+        reg = QgsApplication.processingRegistry()
+        if reg.algorithmById(algo_id) is None:
+            QMessageBox.warning(
+                self, "Algorithm Not Found",
+                f"The algorithm '{algo_id}' is not registered.\n\n"
+                "The Processing provider may not have loaded correctly. "
+                "Try restarting QGIS or reinstalling the plugin."
+            )
+            return
+        try:
+            processing.execAlgorithmDialog(algo_id)
+        except Exception as exc:
+            QMessageBox.critical(
+                self, "Algorithm Error",
+                f"Failed to open '{label}':\n{exc}"
+            )
+            return
         ts = datetime.now().strftime("%H:%M:%S")
         self.recent_runs.insert(0, f"[{ts}] {label} ({algo_id})")
         self.recent_runs = self.recent_runs[:30]
