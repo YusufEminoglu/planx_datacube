@@ -15,13 +15,14 @@ from datetime import datetime
 
 import processing
 from qgis.PyQt.QtCore import QSettings, Qt, QUrl
-from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QDesktopServices, QFont
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QComboBox,
     QDialog,
     QFrame,
     QGridLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -165,6 +166,17 @@ class DataCubeDashboard(QDialog):
         """)
 
     # ── Build UI ─────────────────────────────────────────────────────
+
+    def _make_group(self, title: str) -> QGroupBox:
+        gb = QGroupBox(title)
+        gb.setFont(QFont("Inter, Segoe UI", 9, QFont.Bold))
+        gb.setStyleSheet(
+            "QGroupBox { border: 1px solid #bbb; border-radius: 6px; "
+            "margin-top: 8px; padding: 8px; }"
+            "QGroupBox::title { subcontrol-origin: margin; left: 10px; "
+            "padding: 0 4px; }"
+        )
+        return gb
 
     def _build_ui(self) -> None:
         m = 10 if IS_QGIS4 else 12
