@@ -35,6 +35,7 @@ DATA_CUBE_DEPS: Dict[str, Tuple[str, bool, str]] = {
     "xarray": ("xarray", False, "Labelled multi-dimensional array analysis"),
     "dask": ("dask", False, "Parallel out-of-core computation for large cubes"),
     "zarr": ("zarr", False, "Chunked compressed storage format for netCDF alternatives"),
+    "matplotlib": ("matplotlib", False, "Chart preview visualization for forecasting studio"),
 }
 
 

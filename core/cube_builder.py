@@ -99,6 +99,37 @@ class DataCube:
         ds.close()
         return True
 
+    def to_zarr(self, path: str) -> bool:
+        """Export to Zarr directory store if library available."""
+        try:
+            import zarr
+            import numpy as np
+        except ImportError:
+            return False
+
+        try:
+            store = zarr.DirectoryStore(path)
+            root = zarr.group(store=store, overwrite=True)
+
+            root.create_dataset("x", data=np.array(self.x_coords, dtype="f8"), shape=(len(self.x_coords),), chunks=(len(self.x_coords),))
+            root.create_dataset("y", data=np.array(self.y_coords, dtype="f8"), shape=(len(self.y_coords),), chunks=(len(self.y_coords),))
+            root.create_dataset("time", data=np.array(range(len(self.time_steps)), dtype="i4"), shape=(len(self.time_steps),), chunks=(len(self.time_steps),))
+
+            for var_name in self.variable_names:
+                arr = np.zeros((len(self.time_steps), len(self.y_coords), len(self.x_coords)))
+                for ti, t in enumerate(self.time_steps):
+                    for yi in range(len(self.y_coords)):
+                        for xi in range(len(self.x_coords)):
+                            val = self.data[t][var_name][yi][xi]
+                            arr[ti, yi, xi] = val if math.isfinite(val) else np.nan
+                shape = (len(self.time_steps), len(self.y_coords), len(self.x_coords))
+                chunks = (1, min(100, len(self.y_coords)), min(100, len(self.x_coords)))
+                root.create_dataset(var_name, data=arr, shape=shape, chunks=chunks, fill_value=np.nan, dtype="f8")
+
+            return True
+        except Exception:
+            return False
+
 
 # ---------------------------------------------------------------------------
 # Vector → Cube builder

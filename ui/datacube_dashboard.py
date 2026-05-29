@@ -35,6 +35,8 @@ from qgis.PyQt.QtWidgets import (
     QTextBrowser,
     QVBoxLayout,
     QWidget,
+    QSpinBox,
+    QFormLayout,
 )
 from qgis.core import Qgis, QgsApplication, QgsProject
 
@@ -210,6 +212,9 @@ class DataCubeDashboard(QDialog):
         # Overview tab
         self.overview = QTextBrowser()
         self.tabs.addTab(self.overview, "Overview")
+
+        # Forecasting Studio tab
+        self.tabs.addTab(self._build_forecasting_studio_tab(), "Forecasting Studio")
 
         # Modules tab (card grid)
         mod_tab = QWidget()
@@ -495,10 +500,31 @@ class DataCubeDashboard(QDialog):
             dlg = VoxelConfigDialog(self)
             if dlg.exec():
                 config = dlg.get_config()
-                self.iface.messageBar().pushInfo(
-                    "DataCube Lab",
-                    f"Voxel config: {config['variable']} @ {config['nc_path']}"
-                )
+                nc_path = config["nc_path"]
+
+                # Check QGIS version to load native voxel layer
+                if IS_QGIS4:
+                    from qgis.core import QgsVoxelLayer, QgsProject
+                    # Use netcdf provider for QgsVoxelLayer
+                    layer = QgsVoxelLayer(nc_path, os.path.basename(nc_path), "netcdf")
+                    if layer.isValid():
+                        QgsProject.instance().addMapLayer(layer)
+                        self.iface.messageBar().pushSuccess(
+                            "DataCube Lab",
+                            f"Voxel layer '{layer.name()}' added successfully to the project."
+                        )
+                    else:
+                        QMessageBox.warning(
+                            self, "Voxel Layer Error",
+                            "Failed to load NetCDF file as a native QGIS 4 voxel layer.\n"
+                            "Please check if the NetCDF file structure is valid."
+                        )
+                else:
+                    self.iface.messageBar().pushInfo(
+                        "DataCube Lab",
+                        f"Voxel config saved. Voxel layers are supported in QGIS 4.x. "
+                        f"(Selected variable: {config['variable']})"
+                    )
         except Exception as exc:
             QMessageBox.critical(self, "Voxel Config Error", str(exc))
 
@@ -601,6 +627,7 @@ class DataCubeDashboard(QDialog):
 
         self._refresh_runlog()
         self._filter_cards()
+        self._populate_fc_layers()
 
     # ── Dependency management ────────────────────────────────────────
 
@@ -660,3 +687,223 @@ class DataCubeDashboard(QDialog):
                 self.search.setFocus()
                 return
         super().keyPressEvent(event)
+
+    # ── Forecasting Studio ────────────────────────────────────────────
+
+    def _build_forecasting_studio_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QHBoxLayout(tab)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
+        # Left panel: parameters
+        left_panel = QWidget()
+        left_lyt = QVBoxLayout(left_panel)
+        left_lyt.setContentsMargins(0, 0, 0, 0)
+        left_lyt.setSpacing(10)
+
+        gb = self._make_group("Forecast Settings")
+        form = QFormLayout(gb)
+
+        self.fc_layer_combo = QComboBox()
+        self.fc_layer_combo.currentIndexChanged.connect(self._on_fc_layer_changed)
+        form.addRow("Input Layer:", self.fc_layer_combo)
+
+        self.fc_id_field_combo = QComboBox()
+        self.fc_id_field_combo.currentIndexChanged.connect(self._on_fc_id_field_changed)
+        form.addRow("Location ID Field:", self.fc_id_field_combo)
+
+        self.fc_time_field_combo = QComboBox()
+        form.addRow("Time Field:", self.fc_time_field_combo)
+
+        self.fc_val_field_combo = QComboBox()
+        form.addRow("Value Field:", self.fc_val_field_combo)
+
+        self.fc_loc_combo = QComboBox()
+        form.addRow("Target Location:", self.fc_loc_combo)
+
+        self.fc_method_combo = QComboBox()
+        self.fc_method_combo.addItem("Auto-select best", "auto")
+        self.fc_method_combo.addItem("Exponential Smoothing", "exponential")
+        self.fc_method_combo.addItem("ARIMA", "arima")
+        self.fc_method_combo.addItem("Random Forest", "random_forest")
+        form.addRow("Method:", self.fc_method_combo)
+
+        self.fc_steps_spin = QSpinBox()
+        self.fc_steps_spin.setRange(1, 50)
+        self.fc_steps_spin.setValue(5)
+        form.addRow("Steps Ahead:", self.fc_steps_spin)
+
+        left_lyt.addWidget(gb)
+
+        btn_run = QPushButton("Run Forecast & Plot")
+        btn_run.clicked.connect(self._on_run_studio_forecast)
+        left_lyt.addWidget(btn_run)
+        left_lyt.addStretch()
+
+        layout.addWidget(left_panel, 0)
+
+        # Right panel: Plot canvas
+        right_panel = QFrame()
+        right_panel.setFrameShape(QFrame.Shape.StyledPanel)
+        right_panel.setStyleSheet("background: #ffffff; border-radius: 8px; border: 1px solid #dcdcdc;")
+        right_lyt = QVBoxLayout(right_panel)
+
+        self.forecast_plot_lbl = QLabel("Run forecast to display preview chart.")
+        self.forecast_plot_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.forecast_plot_lbl.setWordWrap(True)
+        self.forecast_plot_lbl.setStyleSheet("color: #7f8c8d; font-style: italic; border: none;")
+        right_lyt.addWidget(self.forecast_plot_lbl)
+
+        layout.addWidget(right_panel, 1)
+
+        # Populate layers
+        self._populate_fc_layers()
+
+        return tab
+
+    def _populate_fc_layers(self) -> None:
+        if not hasattr(self, "fc_layer_combo"):
+            return
+        self.fc_layer_combo.clear()
+        layers = QgsProject.instance().mapLayers().values()
+        for layer in layers:
+            if layer.type() == 0 or (hasattr(layer, 'type') and layer.type() == 0):
+                self.fc_layer_combo.addItem(layer.name(), layer.id())
+
+    def _on_fc_layer_changed(self) -> None:
+        if not hasattr(self, "fc_layer_combo") or self.fc_layer_combo.currentIndex() == -1:
+            return
+        layer_id = self.fc_layer_combo.currentData()
+        layer = QgsProject.instance().mapLayer(layer_id)
+        if not layer:
+            return
+
+        self.fc_id_field_combo.clear()
+        self.fc_time_field_combo.clear()
+        self.fc_val_field_combo.clear()
+
+        for field in layer.fields():
+            name = field.name()
+            self.fc_id_field_combo.addItem(name)
+            self.fc_time_field_combo.addItem(name)
+            self.fc_val_field_combo.addItem(name)
+
+        # set some default selections if possible
+        idx_t = self.fc_time_field_combo.findText("year")
+        if idx_t == -1:
+            idx_t = self.fc_time_field_combo.findText("time")
+        if idx_t != -1:
+            self.fc_time_field_combo.setCurrentIndex(idx_t)
+
+    def _on_fc_id_field_changed(self) -> None:
+        if not hasattr(self, "fc_id_field_combo") or self.fc_id_field_combo.currentIndex() == -1:
+            return
+        layer_id = self.fc_layer_combo.currentData()
+        layer = QgsProject.instance().mapLayer(layer_id)
+        if not layer:
+            return
+        id_field = self.fc_id_field_combo.currentText()
+
+        self.fc_loc_combo.clear()
+        # Collect unique values
+        unique_vals = set()
+        for feat in layer.getFeatures():
+            val = feat[id_field]
+            if val is not None:
+                unique_vals.add(str(val))
+        for val in sorted(unique_vals)[:200]: # limit to 200 items for combobox sanity
+            self.fc_loc_combo.addItem(val)
+
+    def _on_run_studio_forecast(self) -> None:
+        if self.fc_layer_combo.currentIndex() == -1:
+            QMessageBox.warning(self, "No Layer", "Please select a data layer.")
+            return
+        layer_id = self.fc_layer_combo.currentData()
+        layer = QgsProject.instance().mapLayer(layer_id)
+        if not layer:
+            QMessageBox.warning(self, "No Layer", "Selected layer not found.")
+            return
+
+        id_field = self.fc_id_field_combo.currentText()
+        time_field = self.fc_time_field_combo.currentText()
+        val_field = self.fc_val_field_combo.currentText()
+        target_loc = self.fc_loc_combo.currentText()
+        method = self.fc_method_combo.currentData()
+        steps = self.fc_steps_spin.value()
+
+        # Query features for target location
+        data_points = []
+        for feat in layer.getFeatures():
+            if str(feat[id_field]) == target_loc:
+                t = feat[time_field]
+                v = feat[val_field]
+                if t is not None and v is not None:
+                    try:
+                        data_points.append((float(t), float(v)))
+                    except (ValueError, TypeError):
+                        continue
+
+        if not data_points:
+            QMessageBox.warning(self, "No Data", f"No valid data points found for location: {target_loc}")
+            return
+
+        # Sort by time
+        data_points.sort(key=lambda x: x[0])
+        times = [pt[0] for pt in data_points]
+        y_vals = [pt[1] for pt in data_points]
+
+        # Call forecaster
+        from ..core.forecasting_studio import forecast_cell_series
+        try:
+            forecast, method_used = forecast_cell_series(y_vals, method=method, steps_ahead=steps)
+        except Exception as exc:
+            QMessageBox.critical(self, "Forecast Error", f"Forecasting failed: {exc}")
+            return
+
+        # Generate plot
+        try:
+            import tempfile
+            import matplotlib
+            matplotlib.use('Agg') # Thread-safe backend
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(6.2, 3.8), dpi=100)
+
+            # Historical line
+            ax.plot(times, y_vals, label="Historical", color="#1565c0", marker="o", linewidth=1.8, markersize=5)
+
+            # Forecasted line
+            last_t = times[-1]
+            step_gap = times[1] - times[0] if len(times) > 1 else 1.0
+            fc_times = [last_t + (i + 1) * step_gap for i in range(steps)]
+
+            ax.plot([last_t] + fc_times, [y_vals[-1]] + forecast,
+                    label=f"Forecast ({method_used})", color="#e94560", linestyle="--", marker="s", linewidth=1.8, markersize=5)
+
+            # Style the plot
+            ax.set_title(f"Forecasting: {target_loc}", fontsize=12, fontweight='bold', color='#2c3e50')
+            ax.set_xlabel(f"Time ({time_field})", fontsize=10)
+            ax.set_ylabel(val_field, fontsize=10)
+            ax.grid(True, linestyle=":", alpha=0.5)
+            ax.legend(frameon=True, facecolor="#ffffff", edgecolor="#e2e8f0")
+
+            # Remove top/right borders
+            for spine in ('top', 'right'):
+                ax.spines[spine].set_visible(False)
+
+            fig.tight_layout()
+
+            temp_dir = tempfile.gettempdir()
+            img_path = os.path.join(temp_dir, "datacube_forecast_chart.png")
+            fig.savefig(img_path)
+            plt.close(fig)
+
+            # Show image
+            from qgis.PyQt.QtGui import QPixmap
+            pixmap = QPixmap(img_path)
+            self.forecast_plot_lbl.setPixmap(pixmap)
+            self.forecast_plot_lbl.setStyleSheet("border: none;")
+        except Exception as plot_exc:
+            self.forecast_plot_lbl.setText(f"Forecast completed ({method_used}):\n{forecast}\n\nCould not render chart: {plot_exc}")
+            self.forecast_plot_lbl.setStyleSheet("color: #e74c3c; font-style: normal; font-weight: 500;")

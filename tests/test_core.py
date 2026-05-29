@@ -272,6 +272,17 @@ try:
 except Exception as e:
     print(f"  WARN: to_netcdf exception: {e} (expected if netCDF4 not installed)")
 
+# Export to Zarr (test that it doesn't crash, may fail without zarr)
+zarr_path = os.path.join(os.path.dirname(__file__), "_test_cube.zarr")
+try:
+    ok_z = cube.to_zarr(zarr_path)
+    check("to_zarr runs without crash", isinstance(ok_z, bool))
+    if ok_z and os.path.exists(zarr_path):
+        import shutil
+        shutil.rmtree(zarr_path, ignore_errors=True)
+except Exception as e:
+    print(f"  WARN: to_zarr exception: {e} (expected if zarr not installed)")
+
 # ===================================================================
 # 9. DEPENDENCY MANAGER (datacube deps)
 # ===================================================================

@@ -85,6 +85,15 @@ class VoxelConfigDialog(QDialog):
         if path:
             self.file_path_label.setText(path)
             self.file_path_label.setStyleSheet("color: #333; font-size: 11px;")
+            self.var_combo.clear()
+            try:
+                import netCDF4
+                with netCDF4.Dataset(path, "r") as ds:
+                    variables = [v for v in ds.variables
+                                 if v not in ("x", "y", "time", "lat", "lon", "crs")]
+                    self.var_combo.addItems(variables)
+            except Exception:
+                self.var_combo.addItem("value")
 
     def _accept(self) -> None:
         nc_path = self.file_path_label.text()

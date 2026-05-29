@@ -99,6 +99,17 @@ def create_time_slice_layout(
 
         map_item.attemptMove(QgsLayoutPoint(x, y, QgsUnitTypes.LayoutMillimeters))
 
+        # Save corners for drawing connector lines
+        if i == 0:
+            map_corners = []
+        corners = [
+            (x, y),
+            (x + map_w, y),
+            (x, y + map_h),
+            (x + map_w, y + map_h)
+        ]
+        map_corners.append(corners)
+
         # time-step label
         label_item = QgsLayoutItemLabel(layout)
         label_item.setText(lbl)
@@ -111,6 +122,26 @@ def create_time_slice_layout(
         )
         layout.addLayoutItem(label_item)
         layout.addLayoutItem(map_item)
+
+    # Draw connector lines between adjacent time slice maps
+    from qgis.PyQt.QtCore import QPointF
+    from qgis.PyQt.QtGui import QPolygonF
+    from qgis.core import QgsLayoutItemPolyline, QgsLineSymbol
+
+    for i in range(n - 1):
+        corners1 = map_corners[i]
+        corners2 = map_corners[i + 1]
+
+        for pt1, pt2 in zip(corners1, corners2):
+            polygon = QPolygonF([QPointF(pt1[0], pt1[1]), QPointF(pt2[0], pt2[1])])
+            line_item = QgsLayoutItemPolyline(polygon, layout)
+            symbol = QgsLineSymbol.createSimple({
+                "color": "#9ebbca",
+                "width": "0.3",
+                "style": "dash"
+            })
+            line_item.setSymbol(symbol)
+            layout.addLayoutItem(line_item)
 
     # add title
     title = QgsLayoutItemLabel(layout)

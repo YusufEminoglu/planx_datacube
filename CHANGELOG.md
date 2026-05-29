@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.1.0-beta.1] - 2026-05-29
+
+- Beta-1 release with automated EHSA 17-class symbology, Forecasting Studio tab, and Matplotlib-rendered trends
+
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

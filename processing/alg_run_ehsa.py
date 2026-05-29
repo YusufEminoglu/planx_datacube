@@ -9,12 +9,69 @@ from qgis.core import (
     QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterFeatureSink, QgsProcessingParameterFeatureSource,
     QgsProcessingParameterField, QgsProcessingParameterNumber,
+    QgsProcessingLayerPostProcessorInterface,
 )
 from qgis.PyQt.QtCore import QVariant
 
 from ..core.statistics_ehsa import (
     getis_ord_g_star, mann_kendall_test, classify_ehsa_pattern, EHSA_LABELS,
 )
+
+
+class EHSASymbologyPostProcessor(QgsProcessingLayerPostProcessorInterface):
+    """Post-processor to automatically apply standard 17-class symbology to EHSA output."""
+
+    def postProcessLayer(self, layer, context, feedback) -> None:
+        if not layer:
+            return
+
+        from qgis.PyQt.QtGui import QColor
+        from qgis.core import QgsCategorizedSymbolRenderer, QgsRendererCategory, QgsSymbol
+        from ..core.statistics_ehsa import EHSA_LABELS
+
+        EHSA_COLORS = {
+            0: "#e8e8e8",  # Not Significant
+            1: "#ffcccc",  # New Hot Spot
+            2: "#ff9999",  # Consecutive Hot Spot
+            3: "#ff3333",  # Intensifying Hot Spot
+            4: "#cc0000",  # Persistent Hot Spot
+            5: "#ff6666",  # Diminishing Hot Spot
+            6: "#ffb2b2",  # Sporadic Hot Spot
+            7: "#ff80df",  # Oscillating Hot Spot
+            8: "#d966ff",  # Historical Hot Spot
+            9: "#cce6ff",  # New Cold Spot
+            10: "#99ccff", # Consecutive Cold Spot
+            11: "#3399ff", # Intensifying Cold Spot
+            12: "#0066cc", # Persistent Cold Spot
+            13: "#66b2ff", # Diminishing Cold Spot
+            14: "#b2d8ff", # Sporadic Cold Spot
+            15: "#33cccc", # Oscillating Cold Spot
+            16: "#99e6e6", # Historical Cold Spot
+        }
+
+        categories = []
+        for code, label in EHSA_LABELS.items():
+            color_hex = EHSA_COLORS.get(code, "#e8e8e8")
+            color = QColor(color_hex)
+
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            if symbol:
+                symbol.setColor(color)
+                # Clean semi-transparent borders for polygons
+                if layer.geometryType() == 2:
+                    for idx in range(symbol.symbolLayerCount()):
+                        sl = symbol.symbolLayer(idx)
+                        if hasattr(sl, 'setStrokeColor'):
+                            sl.setStrokeColor(QColor(255, 255, 255, 140))
+                        if hasattr(sl, 'setStrokeWidth'):
+                            sl.setStrokeWidth(0.2)
+
+                cat = QgsRendererCategory(str(code), symbol, label)
+                categories.append(cat)
+
+        renderer = QgsCategorizedSymbolRenderer("ehsa_code", categories)
+        layer.setRenderer(renderer)
+        layer.triggerRepaint()
 
 
 class RunEHSAAlgorithm(QgsProcessingAlgorithm):
@@ -163,6 +220,17 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
             ])
             sink.addFeature(feat, QgsFeatureSink.FastInsert)
             feedback.setProgress(int(100 * i / total))
+
+        # Register post-processor for automatic layer styling
+        try:
+            if context.willLoadLayerOnCompletion(dest_id):
+                layer_details = context.layerToLoadOnCompletionDetails(dest_id)
+                layer_details.setPostProcessor(EHSASymbologyPostProcessor())
+            elif context.willLoadLayerOnCompletion(self.OUTPUT):
+                layer_details = context.layerToLoadOnCompletionDetails(self.OUTPUT)
+                layer_details.setPostProcessor(EHSASymbologyPostProcessor())
+        except Exception as exc:
+            feedback.pushWarning(f"Could not apply automatic EHSA symbology: {exc}")
 
         feedback.pushInfo(f"EHSA complete: {total} locations classified.")
         return {self.OUTPUT: dest_id}

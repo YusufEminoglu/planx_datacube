@@ -10,9 +10,9 @@ from qgis.core import (
     QgsPointXY, QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterMultipleLayers, QgsProcessingParameterField,
     QgsProcessingParameterNumber, QgsProcessingParameterFileDestination,
-    QgsProcessingParameterEnum, QgsProcessingParameterFeatureSink,
-    QgsProcessingOutputString, QgsMapLayer, QgsVectorLayer, QgsRasterLayer,
-    QgsRectangle, QgsWkbTypes,
+    QgsProcessingParameterFolderDestination, QgsProcessingParameterEnum,
+    QgsProcessingParameterFeatureSink, QgsProcessingOutputString,
+    QgsMapLayer, QgsVectorLayer, QgsRasterLayer, QgsRectangle, QgsWkbTypes,
 )
 from qgis.PyQt.QtCore import QVariant
 
@@ -29,6 +29,7 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
     GRID_RES = "GRID_RES"
     CUBE_TYPE = "CUBE_TYPE"
     OUTPUT_NC = "OUTPUT_NC"
+    OUTPUT_ZARR = "OUTPUT_ZARR"
     OUTPUT_INFO = "OUTPUT_INFO"
 
     TYPES = [("Vector (multi-timestamp layers)", "vector"), ("Raster stack", "raster")]
@@ -93,6 +94,12 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
+            QgsProcessingParameterFolderDestination(
+                self.OUTPUT_ZARR, "Output Zarr directory store",
+                optional=True,
+            )
+        )
+        self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_GRID, "Output grid (first time step)",
                 type=QgsProcessing.SourceType.TypeVectorPolygon, optional=True,
@@ -108,6 +115,7 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
         grid_res = self.parameterAsDouble(parameters, self.GRID_RES, context)
         cube_type = self.parameterAsEnum(parameters, self.CUBE_TYPE, context)
         output_nc = self.parameterAsFileOutput(parameters, self.OUTPUT_NC, context)
+        output_zarr = self.parameterAsFileOutput(parameters, self.OUTPUT_ZARR, context)
 
         if len(layers) < 2:
             raise QgsProcessingException("At least 2 time-step layers are required.")
@@ -146,6 +154,16 @@ class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
                 feedback.pushWarning(
                     "netCDF4 export skipped — Python package 'netCDF4' not available. "
                     "Install with: pip install netCDF4"
+                )
+
+        if output_zarr:
+            success = cube.to_zarr(output_zarr)
+            if success:
+                feedback.pushInfo(f"Zarr exported to: {output_zarr}")
+            else:
+                feedback.pushWarning(
+                    "Zarr export skipped — Python package 'zarr' not available. "
+                    "Install with: pip install zarr"
                 )
 
         # Build grid polygon layer for the first time step
