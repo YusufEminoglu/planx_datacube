@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.1.0] - 2026-05-29
+
+- Official 1.1.0 release: automated ESRI-compliant 17-class EHSA symbology, thread-safe matplotlib plotting, and Forecasting Studio chart exporter
+
 ## [1.1.0-beta.1] - 2026-05-29
 
 - Beta-1 release with automated EHSA 17-class symbology, Forecasting Studio tab, and Matplotlib-rendered trends

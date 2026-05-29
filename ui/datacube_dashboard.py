@@ -739,6 +739,13 @@ class DataCubeDashboard(QDialog):
         btn_run = QPushButton("Run Forecast & Plot")
         btn_run.clicked.connect(self._on_run_studio_forecast)
         left_lyt.addWidget(btn_run)
+
+        self.btn_export_chart = QPushButton("Export Chart...")
+        self.btn_export_chart.setObjectName("ghost")
+        self.btn_export_chart.setEnabled(False)
+        self.btn_export_chart.clicked.connect(self._on_export_forecast_chart)
+        left_lyt.addWidget(self.btn_export_chart)
+
         left_lyt.addStretch()
 
         layout.addWidget(left_panel, 0)
@@ -904,6 +911,27 @@ class DataCubeDashboard(QDialog):
             pixmap = QPixmap(img_path)
             self.forecast_plot_lbl.setPixmap(pixmap)
             self.forecast_plot_lbl.setStyleSheet("border: none;")
+            self.btn_export_chart.setEnabled(True)
         except Exception as plot_exc:
             self.forecast_plot_lbl.setText(f"Forecast completed ({method_used}):\n{forecast}\n\nCould not render chart: {plot_exc}")
             self.forecast_plot_lbl.setStyleSheet("color: #e74c3c; font-style: normal; font-weight: 500;")
+            self.btn_export_chart.setEnabled(False)
+
+    def _on_export_forecast_chart(self) -> None:
+        import shutil
+        import tempfile
+        from qgis.PyQt.QtWidgets import QFileDialog
+
+        temp_dir = tempfile.gettempdir()
+        src_path = os.path.join(temp_dir, "datacube_forecast_chart.png")
+        if not os.path.exists(src_path):
+            QMessageBox.warning(self, "No Chart", "Please generate a forecast chart first.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Forecast Chart", "", "PNG Images (*.png)")
+        if file_path:
+            try:
+                shutil.copy(src_path, file_path)
+                self.iface.messageBar().pushSuccess("DataCube Lab", f"Chart exported successfully to {file_path}")
+            except Exception as exc:
+                QMessageBox.critical(self, "Export Error", f"Failed to export chart: {exc}")
