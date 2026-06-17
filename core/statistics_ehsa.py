@@ -81,6 +81,58 @@ def getis_ord_g_star(
     return z_scores
 
 
+def getis_ord_gi_star_matrix(
+    values: List[float],
+    adjacency: List[List[Tuple[int, float]]],
+) -> List[float]:
+    """
+    Proper Getis-Ord Gi* using a spatial-weights adjacency list.
+
+    Implements the Ord & Getis (1995) standardised local statistic::
+
+        Gi* = (Σ_j w_ij x_j − X̄ Σ_j w_ij)
+              / ( S · sqrt[ (n Σ_j w_ij² − (Σ_j w_ij)²) / (n − 1) ] )
+
+    with X̄ the global mean and S the global (population) standard deviation.
+    The adjacency **must include the self term** ``(i, w_ii)`` — Gi* (starred)
+    counts unit *i* among its own neighbours.
+
+    Parameters
+    ----------
+    values : list[float]
+        Attribute value for each spatial unit at one time step.
+    adjacency : list[list[(int, float)]]
+        ``adjacency[i]`` = neighbour ``(j, weight)`` tuples for unit ``i``.
+
+    Returns
+    -------
+    list[float] — Gi* z-scores (high positive = hot, high negative = cold).
+    """
+    n = len(values)
+    if n < 3:
+        return [0.0] * n
+
+    mean_val = sum(values) / n
+    second = sum(v * v for v in values) / n
+    s = math.sqrt(max(second - mean_val * mean_val, 0.0))
+    if s <= 1e-12:
+        return [0.0] * n
+
+    z_scores = []
+    for i in range(n):
+        row = adjacency[i] if i < len(adjacency) else []
+        if not row:
+            z_scores.append(0.0)
+            continue
+        w_sum = sum(w for _, w in row)
+        w_sq = sum(w * w for _, w in row)
+        weighted = sum(w * values[j] for j, w in row)
+        denom = s * math.sqrt(max((n * w_sq - w_sum * w_sum) / (n - 1), 1e-18))
+        z_scores.append((weighted - mean_val * w_sum) / denom if denom > 1e-18 else 0.0)
+
+    return z_scores
+
+
 # ---------------------------------------------------------------------------
 # Mann-Kendall Trend Test
 # ---------------------------------------------------------------------------

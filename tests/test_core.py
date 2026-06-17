@@ -56,6 +56,9 @@ from planx_datacube.core import statistics_ehsa as ehsa
 from planx_datacube.core import forecasting_studio as fs
 from planx_datacube.core import cube_builder as cb
 from planx_datacube.core import dependency_manager as dm
+from planx_datacube.core import spatial_weights as sw
+from planx_datacube.core import timeseries_stats as ts
+from planx_datacube.core import local_morans as lm
 
 # ---------------------------------------------------------------------------
 # Framework
@@ -307,6 +310,118 @@ check("install_packages nonexistent fails gracefully", isinstance(ok2, bool))
 
 result = dm.ensure_required(dm.DATA_CUBE_DEPS, auto_install=False)
 check("ensure_required returns bool", isinstance(result, bool))
+
+# ===================================================================
+# 10. SPATIAL WEIGHTS
+# ===================================================================
+section("Spatial Weights")
+
+line_coords = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0), (3.0, 0.0)]
+adj_knn = sw.build_weights(line_coords, mode="knn", k=1)
+check("knn k=1 -> 1 neighbour each", all(len(r) == 1 for r in adj_knn),
+      str([len(r) for r in adj_knn]))
+check("knn nearest is adjacent point", adj_knn[0][0][0] == 1, str(adj_knn[0]))
+
+adj_db = sw.build_weights(line_coords, mode="distance_band", distance=1.5)
+check("distance_band endpoints have 1 neighbour", len(adj_db[0]) == 1 and len(adj_db[3]) == 1)
+check("distance_band middle has 2 neighbours", len(adj_db[1]) == 2 and len(adj_db[2]) == 2)
+
+adj_rs = sw.build_weights(line_coords, mode="knn", k=2, row_standardize=True)
+check("row-standardised weights sum to 1",
+      all(abs(sum(w for _, w in r) - 1.0) < 1e-9 for r in adj_rs))
+
+adj_self = sw.build_weights(line_coords, mode="knn", k=2, include_self=True)
+check("include_self adds self term", any(j == 0 for j, _ in adj_self[0]))
+check("include_self count = k+1", len(adj_self[0]) == 3, str(len(adj_self[0])))
+
+d_auto = sw.auto_distance_band(line_coords)
+check("auto distance band positive", d_auto > 0, str(d_auto))
+check("build_weights n<2 safe", sw.build_weights([(0.0, 0.0)], mode="knn") == [[]])
+
+# ===================================================================
+# 11. GETIS-ORD Gi* (weighted matrix)
+# ===================================================================
+section("EHSA — Getis-Ord Gi* matrix")
+
+vals_g = [10, 10, 1, 10, 1, 1, 1, 1, 1]
+adj_self9 = [[(i, 1.0)] for i in range(9)]
+zg = ehsa.getis_ord_gi_star_matrix(vals_g, adj_self9)
+check("Gi* self-only = standardised z (high>0, low<0)",
+      zg[0] > 0 and zg[8] < 0, f"{zg[0]:.3f}, {zg[8]:.3f}")
+
+adj_global = [[(j, 1.0) for j in range(9)] for _ in range(9)]
+zg2 = ehsa.getis_ord_gi_star_matrix(vals_g, adj_global)
+check("Gi* identical global weights -> equal z", max(zg2) - min(zg2) < 1e-6, str(zg2[:3]))
+check("Gi* matrix n<3 -> zeros", ehsa.getis_ord_gi_star_matrix([1, 2], [[], []]) == [0.0, 0.0])
+
+# ===================================================================
+# 12. LOCAL MORAN'S I
+# ===================================================================
+section("Local Moran's I (LISA)")
+
+# 5x5 grid, top-left 3x3 block high (10), rest 0.
+g_coords = [(x, y) for y in range(5) for x in range(5)]
+g_vals = [10.0 if (x < 3 and y < 3) else 0.0 for y in range(5) for x in range(5)]
+g_adj = sw.build_weights(g_coords, mode="knn", k=4, row_standardize=True)
+lres = lm.local_morans_i(g_vals, g_adj, permutations=999, p_threshold=0.05, seed=42)
+check("LISA returns one per unit", len(lres["cluster"]) == 25)
+idx_center = 1 * 5 + 1                 # (1,1) deep inside the high block
+idx_low = 4 * 5 + 4                    # (4,4) deep in the zero region
+check("LISA high-block centre is High-High", lres["cluster"][idx_center] == lm.LISA_HH,
+      str(lres["cluster"][idx_center]))
+check("LISA high cell: I>0", lres["I"][idx_center] > 0, str(lres["I"][idx_center]))
+check("LISA low cell: z<0 and lag<0",
+      lres["z"][idx_low] < 0 and lres["lag"][idx_low] < 0,
+      f"z={lres['z'][idx_low]:.2f} lag={lres['lag'][idx_low]:.2f}")
+
+lres2 = lm.local_morans_i(g_vals, g_adj, permutations=999, p_threshold=0.05, seed=42)
+check("LISA deterministic across runs", lres["p"] == lres2["p"])
+check("LISA n<3 safe", lm.local_morans_i([1, 2], [[], []], permutations=10)["cluster"]
+      == [lm.LISA_NS, lm.LISA_NS])
+
+# ===================================================================
+# 13. TIME-SERIES STATS — anomaly & trend
+# ===================================================================
+section("Time-Series Stats")
+
+check("robust z flat -> zeros", all(abs(v) < 1e-9 for v in ts.robust_zscores([5, 5, 5, 5, 5])))
+spike = [10, 12, 11, 9, 10, 13, 200, 8, 11, 9, 12, 10]
+zr = ts.robust_zscores(spike)
+check("robust z flags clear spike", max(zr) > 5, f"max={max(zr):.1f}")
+
+res_a = ts.detect_anomalies(spike, threshold=3.0)
+check("detect_anomalies finds 1", res_a["n_anomalies"] == 1, str(res_a["n_anomalies"]))
+check("detect_anomalies index = 6", res_a["first_index"] == 6 and res_a["last_index"] == 6)
+check("detect_anomalies last not anomalous", res_a["last_is_anomaly"] is False)
+
+res_b = ts.detect_anomalies([50] * 11 + [250], threshold=3.0)
+check("MAD-zero fallback still detects spike", res_b["n_anomalies"] >= 1, str(res_b["n_anomalies"]))
+
+check("classify_trend increasing", ts.classify_trend(0.01, 5.0, 0.05) == ts.TREND_INCREASING)
+check("classify_trend decreasing", ts.classify_trend(0.01, -5.0, 0.05) == ts.TREND_DECREASING)
+check("classify_trend insignificant -> none", ts.classify_trend(0.5, 5.0, 0.05) == ts.TREND_NONE)
+check("classify_trend flat slope -> none", ts.classify_trend(0.01, 0.0, 0.05) == ts.TREND_NONE)
+check("sen_intercept correct", abs(ts.sen_intercept([10, 15, 20, 25], 5.0) - 10.0) < 1e-9,
+      str(ts.sen_intercept([10, 15, 20, 25], 5.0)))
+
+# ===================================================================
+# 14. FORECASTING — metrics & backtest
+# ===================================================================
+section("Forecasting — metrics & backtest")
+
+mae, rmse, mape = fs.forecast_metrics([10, 20, 30], [12, 18, 33])
+check("MAE correct", abs(mae - (2 + 2 + 3) / 3) < 1e-9, str(mae))
+check("RMSE correct", abs(rmse - ((4 + 4 + 9) / 3) ** 0.5) < 1e-9, str(rmse))
+check("MAPE positive", mape > 0, str(mape))
+m0 = fs.forecast_metrics([5, 5, 5], [5, 5, 5])
+check("perfect prediction -> zero error", m0[0] == 0 and m0[1] == 0)
+
+bt = fs.backtest_series([50.0] * 12, holdout=3)
+check("backtest n_test = 3", bt["n_test"] == 3, str(bt["n_test"]))
+check("backtest flat series -> ~0 RMSE", bt["best_rmse"] < 1e-6, str(bt["best_rmse"]))
+check("backtest picks a method", bt["best_method"] != "none", bt["best_method"])
+bt2 = fs.backtest_series([1, 2], holdout=3)
+check("backtest too-short series -> none", bt2["best_method"] == "none")
 
 # ===================================================================
 # SUMMARY

@@ -22,11 +22,14 @@ QGIS handles space well and time poorly. DataCube Lab brings the Python data-sci
 ## ✨ Features
 
 - **Cube Builder** — vector/raster → multi-dimensional (X×Y×T×V) data cube with optional netCDF4/Zarr export.
-- **Emerging Hot Spot Analysis** — Getis-Ord Gi* + Mann-Kendall trend → 17 spatiotemporal pattern classes.
-- **Forecasting Studio** — ARIMA, Random Forest and Exponential Smoothing per-cell prediction.
-- **Auto-forecast** — ARIMA → RF → ES fallback chain for maximum robustness on messy series.
+- **Space-Time Cube Aggregation** — bin point events into a fishnet × time-step panel (count / sum / mean / max / min); the one-click front door to every analysis tool below, with optional netCDF cube output.
+- **Emerging Hot Spot Analysis** — Getis-Ord Gi* with *true* spatial neighbourhoods (fixed distance band or K-nearest) + Mann-Kendall trend → 17 spatiotemporal pattern classes, auto-styled.
+- **Local Outlier Analysis (Local Moran's I)** — Anselin LISA cluster/outlier map (High-High, Low-Low, High-Low, Low-High) with a deterministic conditional-permutation significance test.
+- **Temporal Trend Analysis** — Mann-Kendall + Theil-Sen slope per location → Increasing / Decreasing / No-trend.
+- **Temporal Anomaly Detection** — robust median/MAD (or classic) z-score flags anomalous time steps per location.
+- **Forecasting Studio** — ARIMA, Random Forest and Exponential Smoothing per-cell prediction with an auto-fallback chain.
+- **Forecast Backtest** — hold-out MAE / RMSE / MAPE per method picks the most trustworthy forecaster before you project forward.
 - **Voxel Bridge** — configuration dialog for QGIS 4 native volumetric voxel layer rendering.
-- **Lazy evaluation** — Dask-backed processing keeps large cubes workable on a laptop.
 
 ## 🚀 Installation
 
@@ -43,10 +46,12 @@ pip install netCDF4 statsmodels scikit-learn
 ## 📖 Quick start
 
 1. Install and activate the plugin — tools appear under **Processing Toolbox → PlanX DataCube Lab**.
-2. Run **Cube Builder** on a vector or raster time series to create the data cube.
-3. Run **Emerging Hot Spot Analysis** on the cube to classify each cell's pattern.
-4. Run **Forecasting Studio** (or **Auto-forecast**) to project the series forward.
-5. Open the **Voxel Bridge** dialog to render the cube volumetrically in QGIS 4.
+2. Run **Space-Time Cube Aggregation** on a point/event layer (with a numeric time field) to produce a long-format panel: one row per grid cell per time step.
+3. Feed that panel (ID = `cell_id`, Time = `time_step`, Value = `value`) into **Emerging Hot Spot Analysis**, **Local Outlier Analysis**, **Temporal Trend** or **Temporal Anomaly Detection**.
+4. Use **Forecast Backtest** to find the best method, then **Time-Series Forecast** to project the series forward.
+5. Build a netCDF cube (Cube Builder or Space-Time Cube) and open the **Voxel Bridge** dialog to render it volumetrically in QGIS 4.
+
+All analysis tools share the same panel contract, so any layer with *location id*, *numeric time* and *value* fields works directly — the Space-Time Cube is just the easiest way to create one.
 
 ## ⚙️ EHSA pattern classes
 

@@ -54,6 +54,8 @@ ALGO_GROUPS = [
         [
             ("Build Data Cube", "planx_datacube:create_data_cube",
              "Construct X×Y×T×V multi-dimensional cube from vector/raster time series, with optional netCDF4 export."),
+            ("Space-Time Cube Aggregation", "planx_datacube:space_time_cube",
+             "Bin point/feature events into a fishnet × time-step panel (count/sum/mean/max/min) — the front door to EHSA, Trend, Anomaly and Forecast."),
         ],
     ),
     (
@@ -61,9 +63,23 @@ ALGO_GROUPS = [
         "#357a5f",
         [
             ("Emerging Hot Spot Analysis (EHSA)", "planx_datacube:emerging_hot_spot_analysis",
-             "Getis-Ord Gi* + Mann-Kendall → classify each location into 17 spatiotemporal hot/cold spot patterns."),
+             "Getis-Ord Gi* (true distance-band / KNN neighbourhoods) + Mann-Kendall → classify each location into 17 spatiotemporal hot/cold spot patterns."),
+            ("Local Outlier Analysis (Local Moran's I)", "planx_datacube:local_morans_i",
+             "Anselin LISA: significant High-High / Low-Low clusters and High-Low / Low-High spatial outliers via conditional permutation."),
+            ("Temporal Trend Analysis", "planx_datacube:temporal_trend",
+             "Mann-Kendall + Theil-Sen per location → Increasing / Decreasing / No-trend classification with robust slope."),
+            ("Temporal Anomaly Detection", "planx_datacube:temporal_anomaly",
+             "Flag anomalous time steps per location with a robust median/MAD (or classic) z-score."),
+        ],
+    ),
+    (
+        "Forecasting",
+        "#7a5f9e",
+        [
             ("Time-Series Forecast", "planx_datacube:time_series_forecast",
              "Per-cell forecasting with ARIMA / Random Forest / Exponential Smoothing (auto-fallback chain)."),
+            ("Forecast Backtest", "planx_datacube:forecast_backtest",
+             "Hold-out accuracy (MAE / RMSE / MAPE) per method → pick the best forecaster before projecting forward."),
         ],
     ),
 ]
@@ -73,10 +89,17 @@ REQUIRED_IDS = [aid for _, _, items in ALGO_GROUPS for _, aid, _ in items]
 CATEGORY_GROUPS = {
     "Cube Construction": [
         "planx_datacube:create_data_cube",
+        "planx_datacube:space_time_cube",
     ],
     "Spatiotemporal Analysis": [
         "planx_datacube:emerging_hot_spot_analysis",
+        "planx_datacube:local_morans_i",
+        "planx_datacube:temporal_trend",
+        "planx_datacube:temporal_anomaly",
+    ],
+    "Forecasting": [
         "planx_datacube:time_series_forecast",
+        "planx_datacube:forecast_backtest",
     ],
 }
 
@@ -281,8 +304,13 @@ class DataCubeDashboard(QDialog):
         ql.setContentsMargins(12, 12, 12, 12)
         quick = [
             ("Build Data Cube", lambda: self._run_algorithm("planx_datacube:create_data_cube", "Data Cube")),
+            ("Aggregate Space-Time Cube", lambda: self._run_algorithm("planx_datacube:space_time_cube", "Space-Time Cube")),
             ("Run EHSA (Emerging Hot Spots)", lambda: self._run_algorithm("planx_datacube:emerging_hot_spot_analysis", "EHSA")),
+            ("Run Local Outlier Analysis (LISA)", lambda: self._run_algorithm("planx_datacube:local_morans_i", "Local Moran's I")),
+            ("Run Temporal Trend Analysis", lambda: self._run_algorithm("planx_datacube:temporal_trend", "Temporal Trend")),
+            ("Run Temporal Anomaly Detection", lambda: self._run_algorithm("planx_datacube:temporal_anomaly", "Anomaly")),
             ("Run Time-Series Forecast", lambda: self._run_algorithm("planx_datacube:time_series_forecast", "Forecast")),
+            ("Run Forecast Backtest", lambda: self._run_algorithm("planx_datacube:forecast_backtest", "Backtest")),
             ("Configure 3D Voxel Layer", self._on_voxel_config),
         ]
         for label, fn in quick:

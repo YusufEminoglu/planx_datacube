@@ -2,20 +2,22 @@
 """Emerging Hot Spot Analysis — Processing algorithm."""
 from __future__ import annotations
 
-import math
-
 from qgis.core import (
     QgsFeature, QgsFeatureSink, QgsField, QgsFields, QgsGeometry,
     QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterFeatureSink, QgsProcessingParameterFeatureSource,
     QgsProcessingParameterField, QgsProcessingParameterNumber,
+    QgsProcessingParameterEnum,
     QgsProcessingLayerPostProcessorInterface,
 )
 from qgis.PyQt.QtCore import QVariant
 
 from ..core.statistics_ehsa import (
-    getis_ord_g_star, mann_kendall_test, classify_ehsa_pattern, EHSA_LABELS,
+    getis_ord_g_star, getis_ord_gi_star_matrix, mann_kendall_test,
+    classify_ehsa_pattern, EHSA_LABELS,
 )
+from ..core.spatial_weights import build_weights, neighbour_counts
+from ..core.panel import read_panel, centroid_xy
 
 
 class EHSASymbologyPostProcessor(QgsProcessingLayerPostProcessorInterface):
@@ -40,13 +42,13 @@ class EHSASymbologyPostProcessor(QgsProcessingLayerPostProcessorInterface):
             7: "#ff80df",  # Oscillating Hot Spot
             8: "#d966ff",  # Historical Hot Spot
             9: "#cce6ff",  # New Cold Spot
-            10: "#99ccff", # Consecutive Cold Spot
-            11: "#3399ff", # Intensifying Cold Spot
-            12: "#0066cc", # Persistent Cold Spot
-            13: "#66b2ff", # Diminishing Cold Spot
-            14: "#b2d8ff", # Sporadic Cold Spot
-            15: "#33cccc", # Oscillating Cold Spot
-            16: "#99e6e6", # Historical Cold Spot
+            10: "#99ccff",  # Consecutive Cold Spot
+            11: "#3399ff",  # Intensifying Cold Spot
+            12: "#0066cc",  # Persistent Cold Spot
+            13: "#66b2ff",  # Diminishing Cold Spot
+            14: "#b2d8ff",  # Sporadic Cold Spot
+            15: "#33cccc",  # Oscillating Cold Spot
+            16: "#99e6e6",  # Historical Cold Spot
         }
 
         categories = []
@@ -80,7 +82,16 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
     TIME_FIELD = "TIME_FIELD"
     VALUE_FIELD = "VALUE_FIELD"
     P_THRESHOLD = "P_THRESHOLD"
+    SPATIAL_REL = "SPATIAL_REL"
+    DISTANCE = "DISTANCE"
+    N_NEIGHBORS = "N_NEIGHBORS"
     OUTPUT = "OUTPUT"
+
+    SPATIAL_MODES = [
+        ("No spatial weighting (global z-score)", "none"),
+        ("Fixed distance band", "distance_band"),
+        ("K nearest neighbours", "knn"),
+    ]
 
     def name(self) -> str:
         return "emerging_hot_spot_analysis"
@@ -101,7 +112,13 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
         return (
             "Perform Emerging Hot Spot Analysis on panel data.\n\n"
             "Classifies each spatial unit into one of 17 patterns using "
-            "Getis-Ord Gi* z-scores and Mann-Kendall trend test.\n"
+            "Getis-Ord Gi* z-scores and the Mann-Kendall trend test.\n\n"
+            "Spatial relationship: choose how neighbours are defined for the "
+            "Gi* statistic. 'Fixed distance band' and 'K nearest neighbours' "
+            "compute a true local hot/cold statistic from each location's "
+            "neighbourhood (recommended); 'No spatial weighting' falls back to "
+            "a global standardised z-score (useful when locations are not "
+            "spatially comparable).\n\n"
             "Output: one row per location with ehsa_code (0-16), "
             "ehsa_label, mk_tau, mk_p_value, mk_slope."
         )
@@ -121,6 +138,17 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
             self.P_THRESHOLD, "Significance threshold (p-value)",
             type=QgsProcessingParameterNumber.Double,
             defaultValue=0.05, minValue=0.001, maxValue=0.2))
+        self.addParameter(QgsProcessingParameterEnum(
+            self.SPATIAL_REL, "Spatial relationship (Gi* neighbourhood)",
+            options=[m[0] for m in self.SPATIAL_MODES], defaultValue=1))
+        self.addParameter(QgsProcessingParameterNumber(
+            self.DISTANCE, "Distance band (map units; 0 = auto)",
+            type=QgsProcessingParameterNumber.Double,
+            defaultValue=0.0, minValue=0.0, optional=True))
+        self.addParameter(QgsProcessingParameterNumber(
+            self.N_NEIGHBORS, "Number of neighbours (KNN)",
+            type=QgsProcessingParameterNumber.Integer,
+            defaultValue=8, minValue=1, maxValue=100, optional=True))
         self.addParameter(QgsProcessingParameterFeatureSink(
             self.OUTPUT, "EHSA classified output"))
 
@@ -130,31 +158,15 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
         time_field = self.parameterAsString(parameters, self.TIME_FIELD, context)
         value_field = self.parameterAsString(parameters, self.VALUE_FIELD, context)
         p_threshold = self.parameterAsDouble(parameters, self.P_THRESHOLD, context)
+        spatial_mode = self.SPATIAL_MODES[
+            self.parameterAsEnum(parameters, self.SPATIAL_REL, context)][1]
+        distance = self.parameterAsDouble(parameters, self.DISTANCE, context)
+        n_neighbors = self.parameterAsInt(parameters, self.N_NEIGHBORS, context)
 
-        # Organise: {location_id: {time_step: value}}
-        loc_times: dict = {}
-        time_steps: set = set()
-        location_ids: set = set()
-
-        for feat in source.getFeatures():
-            loc_id = str(feat[id_field])
-            raw_t = feat[time_field]
-            raw_v = feat[value_field]
-            if raw_t is None or raw_v is None:
-                continue
-            try:
-                t = int(float(raw_t))
-                v = float(raw_v)
-            except (ValueError, TypeError):
-                continue
-            if not math.isfinite(v):
-                continue
-            location_ids.add(loc_id)
-            time_steps.add(t)
-            loc_times.setdefault(loc_id, {})[t] = v
-
-        time_sorted = sorted(time_steps)
-        loc_sorted = sorted(location_ids)
+        panel = read_panel(source, id_field, time_field, value_field)
+        loc_sorted = panel.locations
+        time_sorted = panel.times
+        loc_geom = panel.loc_geom
 
         if len(time_sorted) < 3:
             raise QgsProcessingException(f"Need >= 3 time steps (got {len(time_sorted)}).")
@@ -163,11 +175,47 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushInfo(f"EHSA: {len(loc_sorted)} locations x {len(time_sorted)} steps")
 
-        # Getis-Ord Gi* per time step
+        # Build spatial weights from per-location centroids (Gi* includes self).
+        adjacency = None
+        if spatial_mode != "none":
+            coords = []
+            missing = 0
+            for loc in loc_sorted:
+                xy = centroid_xy(loc_geom.get(loc))
+                if xy is None:
+                    missing += 1
+                    coords.append((0.0, 0.0))
+                else:
+                    coords.append(xy)
+            if missing:
+                feedback.pushWarning(
+                    f"{missing} location(s) lack geometry; falling back to a "
+                    "global z-score (no spatial weighting).")
+                spatial_mode = "none"
+            else:
+                adjacency = build_weights(
+                    coords, mode=spatial_mode, k=n_neighbors,
+                    distance=distance, include_self=True, row_standardize=False)
+                counts = neighbour_counts(adjacency)  # includes the self term
+                avg_nb = (sum(counts) / len(counts) - 1.0) if counts else 0.0
+                if spatial_mode == "distance_band":
+                    band_str = "auto" if distance <= 0 else f"{distance:.4g}"
+                    feedback.pushInfo(
+                        f"Gi* spatial weights: fixed distance band ({band_str}); "
+                        f"avg neighbours/location: {avg_nb:.1f}")
+                else:
+                    feedback.pushInfo(
+                        f"Gi* spatial weights: {n_neighbors} nearest neighbours; "
+                        f"avg neighbours/location: {avg_nb:.1f}")
+
+        # Getis-Ord Gi* per time step (weighted if a neighbourhood is defined).
         z_by_t = []
         for t in time_sorted:
-            vals = [loc_times.get(loc, {}).get(t, 0.0) for loc in loc_sorted]
-            z_by_t.append(getis_ord_g_star(vals))
+            vals = [panel.loc_times.get(loc, {}).get(t, 0.0) for loc in loc_sorted]
+            if adjacency is not None:
+                z_by_t.append(getis_ord_gi_star_matrix(vals, adjacency))
+            else:
+                z_by_t.append(getis_ord_g_star(vals))
 
         # Classify
         patterns = classify_ehsa_pattern(z_by_t, p_threshold)
@@ -175,17 +223,8 @@ class RunEHSAAlgorithm(QgsProcessingAlgorithm):
         # Mann-Kendall per location
         mk_results = {}
         for i, loc in enumerate(loc_sorted):
-            series = [loc_times.get(loc, {}).get(t, 0.0) for t in time_sorted]
+            series = [panel.loc_times.get(loc, {}).get(t, 0.0) for t in time_sorted]
             mk_results[loc] = mann_kendall_test(series)
-
-        # Collect geometry per location
-        loc_geom = {}
-        for feat in source.getFeatures():
-            loc_id = str(feat[id_field])
-            if loc_id not in loc_geom:
-                g = feat.geometry()
-                if g and not g.isEmpty():
-                    loc_geom[loc_id] = g
 
         # Build output schema
         out_fields = QgsFields()

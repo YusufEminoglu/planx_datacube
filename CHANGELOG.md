@@ -1,5 +1,23 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.2.0] - 2026-06-17
+
+### Added
+- **Space-Time Cube Aggregation** (`space_time_cube`) — bin point/feature events by centroid into a fishnet grid crossed with time bins (count / sum / mean / max / min). Emits a long-format panel polygon layer (cell_id, col, row, time_step, time_value, value, count) that feeds directly into EHSA, Local Moran's I, Trend, Anomaly and Forecast. Optional netCDF4 cube export.
+- **Local Outlier Analysis (Anselin Local Moran's I)** (`local_morans_i`) — High-High / Low-Low clusters and High-Low / Low-High spatial outliers with a deterministic conditional-permutation pseudo p-value, on a temporally aggregated panel (mean / last / sum / max).
+- **Temporal Trend Analysis** (`temporal_trend`) — Mann-Kendall significance + Theil-Sen slope and intercept per location, classified as Increasing / Decreasing / No significant trend.
+- **Temporal Anomaly Detection** (`temporal_anomaly`) — per-location anomalous time steps via a robust median/MAD modified z-score (or classic mean/std), with anomaly count, rate, max |z| and most-recent-step flag.
+- **Forecast Backtest** (`forecast_backtest`) — hold out the last N steps, score Exponential Smoothing / ARIMA / Random Forest by MAE, RMSE and MAPE, and report the lowest-RMSE method per location.
+- Automatic categorized symbology for the EHSA, Local Moran's I, Trend, Anomaly and Backtest outputs.
+
+### Changed
+- **Emerging Hot Spot Analysis Getis-Ord Gi\*** now computes a *true* local statistic using spatial neighbourhoods — fixed distance band (auto or explicit) or K-nearest neighbours — instead of a global self-only z-score. The previous behaviour remains available as "No spatial weighting".
+- Shared `core/spatial_weights.py`, `core/panel.py` and `core/timeseries_stats.py` modules unify neighbourhood construction and panel parsing across all spatiotemporal tools.
+- Dashboard catalogue, Quick Actions and Modules grid expanded to the full 8-algorithm toolbox (new "Forecasting" group).
+
+### Tested
+- End-to-end headless runs of all 8 Processing algorithms on QGIS 3.44 (LTR) and QGIS 4, with numerical assertions (Gi\* hot-cluster z-scores, Local Moran's HH/LL recovery, Mann-Kendall trend sign, anomaly recovery, backtest accuracy ordering).
+
 ## [1.1.0] - 2026-05-29
 
 - Official 1.1.0 release: automated ESRI-compliant 17-class EHSA symbology, thread-safe matplotlib plotting, and Forecasting Studio chart exporter
