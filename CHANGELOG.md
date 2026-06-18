@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.2.1] - 2026-06-18
+
+- docs: add CITATION.cff for Zenodo DOI integration
+
 ## [1.2.0] - 2026-06-17
 
 ### Added
