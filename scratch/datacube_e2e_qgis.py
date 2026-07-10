@@ -458,6 +458,36 @@ for f in layer8.getFeatures():
         fc_methods.add(m)
 check(len(fc_methods) > 0, f"forecast methods used: {fc_methods}")
 
+# Phase 2: verify ARIMA fallback is visible in output when statsmodels is missing.
+print("\n=== 8b/8: time_series_forecast (ARIMA explicit, expect fallback) ===")
+res8b = processing.run(
+    "planx_datacube:time_series_forecast",
+    {
+        "INPUT": panel,
+        "ID_FIELD": "loc_id",
+        "TIME_FIELD": "time_step",
+        "VALUE_FIELD": "value",
+        "STEPS_AHEAD": 3,
+        "METHOD": 1,        # ARIMA explicitly
+        "OUTPUT": "TEMPORARY_OUTPUT",
+    },
+)
+layer8b = res8b["OUTPUT"]
+if isinstance(layer8b, str):
+    layer8b = QgsVectorLayer(layer8b, "forecast_arima", "ogr")
+check(layer8b.isValid(), "ARIMA forecast output valid")
+# Check: since statsmodels is missing in OSGeo4W, ARIMA should fall back.
+arima_methods = set()
+arima_fell_back = False
+for f in layer8b.getFeatures():
+    m = f["forecast_method"]
+    if m:
+        arima_methods.add(m)
+        if m != "ARIMA":
+            arima_fell_back = True
+check(len(arima_methods) > 0, f"ARIMA forecast methods used: {arima_methods}")
+check(arima_fell_back, f"ARIMA fell back (statsmodels missing): got {arima_methods}")
+
 
 # ============================================================================
 # SUMMARY

@@ -124,6 +124,7 @@ class ForecastAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
         )
 
         total = len(loc_series)
+        fallback_count = 0
         for i, (loc_id, time_map) in enumerate(loc_series.items()):
             if feedback.isCanceled():
                 break
@@ -132,12 +133,27 @@ class ForecastAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
             forecast, used_method = forecast_cell_series(series, method, steps_ahead)
 
+            # Surface silent fallbacks: if user chose a specific method and got
+            # something else, warn once at the end with a count.
+            if method != "auto":
+                expected = {"arima": "ARIMA", "random_forest": "RandomForest",
+                            "exponential": "exponential_smoothing"}.get(method)
+                if expected and used_method != expected:
+                    fallback_count += 1
+
             feat = QgsFeature(out_fields)
             feat.setGeometry(loc_geom.get(loc_id, QgsGeometry()))
             attrs = [str(loc_id)] + [round(float(v), 6) for v in forecast] + [str(used_method)]
             feat.setAttributes(attrs)
             sink.addFeature(feat, QgsFeatureSink.FastInsert)
             feedback.setProgress(int(100 * i / total))
+
+        if fallback_count:
+            feedback.pushWarning(
+                f"Forecast method '{method}' fell back to a simpler method for "
+                f"{fallback_count}/{total} location(s) — the requested package "
+                f"(statsmodels or scikit-learn) may not be available. "
+                f"Check the 'forecast_method' output column for details.")
 
         feedback.pushInfo(f"Forecast complete: {total} locations, {steps_ahead} steps ahead.")
         return {self.OUTPUT: dest_id}

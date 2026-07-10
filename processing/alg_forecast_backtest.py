@@ -89,6 +89,26 @@ class ForecastBacktestAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
         feedback.pushInfo(
             f"Backtest: {panel.n_locations} locations, hold-out {holdout} steps")
 
+        # Warn if optional forecasting packages are not available.
+        try:
+            import statsmodels  # noqa: F401
+            _has_statsmodels = True
+        except ImportError:
+            _has_statsmodels = False
+        try:
+            import sklearn  # noqa: F401
+            _has_sklearn = True
+        except ImportError:
+            _has_sklearn = False
+        if not _has_statsmodels:
+            feedback.pushWarning(
+                "statsmodels not available — ARIMA backtest will use "
+                "Exponential Smoothing instead on all locations.")
+        if not _has_sklearn:
+            feedback.pushWarning(
+                "scikit-learn not available — Random Forest backtest will use "
+                "Exponential Smoothing instead on all locations.")
+
         out_fields = QgsFields()
         out_fields.append(QgsField("location_id", QVariant.String))
         out_fields.append(QgsField("n_obs", QVariant.Int))
