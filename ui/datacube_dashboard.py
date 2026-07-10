@@ -626,9 +626,9 @@ class DataCubeDashboard(QDialog):
             "data cubes from vector/raster time series, run Emerging Hot Spot Analysis "
             "(17 pattern classes), and forecast future values with ARIMA / Random Forest.</p>"
             f"<p><b>Loaded layers:</b> {len(layers)}</p>"
-            f"<p><b>System health:</b> {score:.0f}% ({cat_ok_total}/{cat_total} algorithms)</p>"
-            + (f"<p><b>Missing:</b> {', '.join(missing)}</p>" if missing else "<p>All modules ready.</p>")
-            + "<p><b>Get started:</b> Open <b>Modules</b>, pick an algorithm, and click <b>Run</b>.</p>"
+            f"<p><b>System health:</b> {score:.0f}% ({cat_ok_total}/{cat_total} algorithms)</p>" +
+            (f"<p><b>Missing:</b> {', '.join(missing)}</p>" if missing else "<p>All modules ready.</p>") +
+            "<p><b>Get started:</b> Open <b>Modules</b>, pick an algorithm, and click <b>Run</b>.</p>"
         )
 
         cat_table = [
@@ -650,8 +650,8 @@ class DataCubeDashboard(QDialog):
             f"<p><b>Available algorithms:</b> {len(REQUIRED_IDS) - len(missing)}/{len(REQUIRED_IDS)}</p>"
             f"<p><b>Coverage score:</b> {score:.0f}%</p>"
             f"<p><b>Missing:</b> {', '.join(missing) if missing else 'None'}</p>"
-            "<h3>Category Coverage</h3>"
-            + "".join(cat_table)
+            "<h3>Category Coverage</h3>" +
+            "".join(cat_table)
         )
 
         self._refresh_runlog()
@@ -673,9 +673,9 @@ class DataCubeDashboard(QDialog):
             QMessageBox.information(self, "DataCube Setup", "All dependencies already installed.")
             return
         msg = (
-            "The following packages will be installed via pip:\n\n"
-            + "\n".join(f"  - {p}" for p in all_missing)
-            + "\n\nThis may take several minutes (scikit-learn, statsmodels are large).\n"
+            "The following packages will be installed via pip:\n\n" +
+            "\n".join(f"  - {p}" for p in all_missing) +
+            "\n\nThis may take several minutes (scikit-learn, statsmodels are large).\n"
             "QGIS restart recommended afterwards.\n\nContinue?"
         )
         if QMessageBox.question(
@@ -848,7 +848,7 @@ class DataCubeDashboard(QDialog):
             val = feat[id_field]
             if val is not None:
                 unique_vals.add(str(val))
-        for val in sorted(unique_vals)[:200]: # limit to 200 items for combobox sanity
+        for val in sorted(unique_vals)[:200]:  # limit to 200 items for combobox sanity
             self.fc_loc_combo.addItem(val)
 
     def _on_run_studio_forecast(self) -> None:
@@ -901,7 +901,7 @@ class DataCubeDashboard(QDialog):
         try:
             import tempfile
             import matplotlib
-            matplotlib.use('Agg') # Thread-safe backend
+            matplotlib.use('Agg')  # Thread-safe backend
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(figsize=(6.2, 3.8), dpi=100)

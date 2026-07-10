@@ -284,8 +284,9 @@ def classify_ehsa_pattern(
     patterns = []
     for unit in range(n_units):
         z_series = [z_scores_by_time[t][unit] for t in range(n_times)]
-        bin_series = [1 if abs(z) >= z_critical and z > 0 else
-                      -1 if abs(z) >= z_critical and z < 0 else 0
+        bin_series = [1 if abs(z) >= z_critical and z > 0
+                      else -1 if abs(z) >= z_critical and z < 0
+                      else 0
                       for z in z_series]
 
         # Mann-Kendall test

@@ -10,3 +10,5 @@ dist/
 *.zarr
 *.qgs~
 *.qgz~
+scratch/
+.pytest_cache/

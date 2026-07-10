@@ -71,8 +71,8 @@ class VoxelConfigDialog(QDialog):
 
         # buttons
         btn_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
         )
         btn_box.accepted.connect(self._accept)
         btn_box.rejected.connect(self.reject)
