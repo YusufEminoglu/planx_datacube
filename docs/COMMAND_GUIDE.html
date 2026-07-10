@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PlanX DataCube Lab — Command Guide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 24px; color: #102a2f; background: #f4faf9; }
+    h1, h2 { color: #0f4c5c; }
+    .card { background: #fff; border: 1px solid #d7e8e5; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    code { background: #edf4f2; padding: 2px 6px; border-radius: 6px; }
+    a { color: #0f4c5c; }
+  </style>
+</head>
+<body>
+  <h1>PlanX DataCube Lab — Command Guide v1.3</h1>
+  <p>All 8 Processing algorithms in the <strong>PlanX DataCube Lab</strong> provider.
+  Each entry includes the algorithm ID (for PyQGIS), its purpose, and a link to the
+  <a href="https://github.com/YusufEminoglu/planx_datacube">online documentation</a>.</p>
+
+  <h2>Data Cube</h2>
+  <div class="card">
+    <p><code>planx_datacube:create_data_cube</code></p>
+    <p>Construct a multi-dimensional (X×Y×T×V) data cube from vector or raster time-series layers.
+    For vector input: select multiple layers, each representing one time step. The algorithm
+    rasterises each layer onto a common fishnet grid and builds the cube.
+    For raster input: select multiple single-band rasters. Output: netCDF4 file and/or in-memory
+    cube for downstream EHSA / forecasting.</p>
+  </div>
+  <div class="card">
+    <p><code>planx_datacube:space_time_cube</code></p>
+    <p>Aggregate point/feature events into a regular space-time cube: a fishnet grid crossed with
+    time bins. Each feature is binned by its centroid into a grid cell and by its time field into
+    a time step, then aggregated (count / sum / mean / max / min). The output is a long-format
+    panel polygon layer that feeds directly into EHSA, Local Moran's I, Trend, Anomaly and Forecast
+    tools. Optionally writes the cube to netCDF4 for voxel rendering.</p>
+  </div>
+
+  <h2>Spatiotemporal Analysis</h2>
+  <div class="card">
+    <p><code>planx_datacube:emerging_hot_spot_analysis</code></p>
+    <p>Perform Emerging Hot Spot Analysis on panel data. Classifies each spatial unit into one of
+    17 patterns using Getis-Ord Gi* z-scores and the Mann-Kendall trend test. Spatial relationship:
+    fixed distance band, K nearest neighbours (recommended), or global standardised z-score.
+    Output: one row per location with ehsa_code (0-16), ehsa_label, mk_tau, mk_p_value, mk_slope.</p>
+  </div>
+  <div class="card">
+    <p><code>planx_datacube:local_morans_i</code></p>
+    <p>Anselin Local Moran's I (LISA): find statistically significant spatial clusters and outliers.
+    The panel is first reduced to one value per location (mean, last, sum or max over time), then
+    each location is classified as High-High / Low-Low cluster, High-Low / Low-High outlier, or
+    Not significant. Significance via deterministic conditional permutation test.</p>
+  </div>
+  <div class="card">
+    <p><code>planx_datacube:temporal_trend</code></p>
+    <p>Detect monotonic trends per location with the non-parametric Mann-Kendall test and the robust
+    Theil-Sen slope estimator. Each location is classified as Increasing, Decreasing, or No significant
+    trend at the chosen significance level. Output: location_id, n_obs, mk_tau, mk_p_value, sen_slope,
+    sen_intercept, trend_code, trend.</p>
+  </div>
+  <div class="card">
+    <p><code>planx_datacube:temporal_anomaly</code></p>
+    <p>Flag anomalous time steps per location using a robust modified z-score (median / MAD) —
+    resistant to the very outliers it looks for — or the classic mean / standard-deviation z-score.
+    A point is anomalous when |z| >= the threshold (default 3.0). Output: location_id, n_obs,
+    n_anomalies, anomaly_rate, max_abs_z, last_z, last_anomaly, first_anom_time, last_anom_time.</p>
+  </div>
+
+  <h2>Forecasting</h2>
+  <div class="card">
+    <p><code>planx_datacube:forecast_backtest</code></p>
+    <p>Backtest the forecasting methods per location: hold out the last N observations, forecast them
+    from the earlier history, and score each method by MAE, RMSE and MAPE. The method with the lowest
+    hold-out RMSE is reported as best_method — use it to decide which method to trust before forecasting
+    forward with the Time-Series Forecast tool. Output: location_id, n_obs, best_method, best_rmse,
+    and per-method RMSE columns.</p>
+  </div>
+  <div class="card">
+    <p><code>planx_datacube:time_series_forecast</code></p>
+    <p>Forecast future values per location using the selected method. Auto mode tries ARIMA first,
+    then Random Forest, then Exponential Smoothing. Output: one row per location with forecast
+    columns (forecast_t1..tN) and the method actually used (forecast_method).</p>
+  </div>
+</body>
+</html>
