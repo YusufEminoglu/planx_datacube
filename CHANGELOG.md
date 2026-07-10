@@ -1,5 +1,19 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.0] - 2026-07-10
+
+### Added
+- **helpUrl()** for all 8 Processing algorithms — each toolbox entry now links to the GitHub repository documentation.
+- **e2e algorithm-count regression guard** — the headless e2e harness asserts `len(provider.algorithms()) == 8` to catch accidental provider drift.
+- **Forecasting-fallback warnings** — when ARIMA or Random Forest silently falls back to Exponential Smoothing (due to missing statsmodels/scikit-learn or a short series), a `pushWarning` now surfaces the fallback in the Processing log.
+- **Command guide** (`docs/COMMAND_GUIDE.html`) listing all 8 algorithms with their IDs, descriptions, and help links.
+
+### Changed
+- **Test suite converted to pytest** — `tests/test_core.py` is now `python -m pytest`-discoverable (97 assertions preserved, zero dropped).
+- **Lint cleanup** — flake8 findings reduced from 59 to 7 (remaining are pre-existing E501/E261 only); bandit Low findings reduced from 9 to 4 with 5 `# nosec` suppressions for deterministic-RNG and e2e-assert use.
+- **metadata.txt** wording: "revolutionises" replaced with a factual "brings space-time cube analytics to QGIS".
+- **CITATION.cff** version synced with metadata.txt.
+
 ## [1.2.1] - 2026-06-18
 
 - docs: add CITATION.cff for Zenodo DOI integration
