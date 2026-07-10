@@ -14,8 +14,8 @@ import os
 from datetime import datetime
 
 import processing
-from qgis.PyQt.QtCore import QSettings, Qt, QUrl
-from qgis.PyQt.QtGui import QDesktopServices, QFont
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QComboBox,
@@ -515,8 +515,9 @@ class DataCubeDashboard(QDialog):
         try:
             from ..layout.timeslice_stacker import create_time_slice_layout
             create_time_slice_layout(layers, stack_direction=direction,
-                                      label_time_steps=names)
-            self.iface.messageBar().pushSuccess("DataCube Lab",
+                                     label_time_steps=names)
+            self.iface.messageBar().pushSuccess(
+                "DataCube Lab",
                 "Time-slice layout created. Open Layout Manager to view.")
         except Exception as exc:
             QMessageBox.critical(self, "Layout Error", str(exc))
@@ -660,7 +661,7 @@ class DataCubeDashboard(QDialog):
     # ── Dependency management ────────────────────────────────────────
 
     def _on_check_deps(self) -> None:
-        from ..core.dependency_manager import check_packages, get_status_report, DATA_CUBE_DEPS
+        from ..core.dependency_manager import get_status_report, DATA_CUBE_DEPS
         report = get_status_report(DATA_CUBE_DEPS, "DataCube Lab Dependencies")
         self.setup_status.setPlainText(report)
 

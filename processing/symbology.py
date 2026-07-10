@@ -65,6 +65,7 @@ class CategorizedPostProcessor(QgsProcessingLayerPostProcessorInterface):
             try:
                 feedback.pushWarning(f"Could not apply automatic symbology: {exc}")
             except Exception:
+                # Swallow — postProcessLayer has no fallback channel if pushWarning itself fails.
                 pass
 
 

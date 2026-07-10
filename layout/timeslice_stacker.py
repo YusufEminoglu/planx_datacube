@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import List
 
-from qgis.PyQt.QtGui import QFont, QColor
+from qgis.PyQt.QtGui import QFont
 from qgis.core import (
     QgsLayout, QgsLayoutItemMap, QgsLayoutItemLabel,
     QgsLayoutPoint, QgsLayoutSize, QgsProject, QgsRectangle,
@@ -64,7 +64,7 @@ def create_time_slice_layout(
 
     page = layout.pageCollection().page(0)
     page.setPageSize(QgsLayoutSize(page_width_mm, page_height_mm,
-                                    QgsUnitTypes.LayoutMillimeters))
+                                   QgsUnitTypes.LayoutMillimeters))
 
     # compute a common extent
     extent = QgsRectangle(layers_by_time[0].extent())

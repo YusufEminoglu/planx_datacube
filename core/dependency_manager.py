@@ -15,7 +15,7 @@ from __future__ import annotations
 import importlib
 import subprocess
 import sys
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 
 # ── Package definitions ──────────────────────────────────────────────
@@ -117,13 +117,13 @@ def get_status_report(
             lines.append(f"  [OK] {pkg} — {purpose}")
 
     if missing_req:
-        lines.append(f"\nMISSING (required — plugin may not work correctly):")
+        lines.append("\nMISSING (required — plugin may not work correctly):")
         for pkg in missing_req:
             _, _, purpose = deps[pkg]
             lines.append(f"  [!!] {pkg} — {purpose}")
 
     if missing_opt:
-        lines.append(f"\nMISSING (optional — enhanced features unavailable):")
+        lines.append("\nMISSING (optional — enhanced features unavailable):")
         for pkg in missing_opt:
             _, _, purpose = deps[pkg]
             lines.append(f"  [--] {pkg} — {purpose}")

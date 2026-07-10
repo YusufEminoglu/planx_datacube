@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import os
 import sys
-import math
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -37,7 +36,7 @@ QgsApplication.processingRegistry().addProvider(provider)
 
 # ---- Regression guard: pin algorithm count ----
 algo_count = len(list(provider.algorithms()))
-assert algo_count == 8, f"expected 8 algorithms, got {algo_count}"
+assert algo_count == 8, f"expected 8 algorithms, got {algo_count}"  # nosec B101
 print(f"Algorithm count pin: {algo_count} (PASS)")
 
 fails = []
@@ -59,7 +58,7 @@ def check(cond, label):
 # ============================================================================
 from qgis.core import (  # noqa: E402
     QgsFeature, QgsField, QgsFields, QgsGeometry,
-    QgsPointXY, QgsRectangle, QgsVectorLayer, QgsWkbTypes,
+    QgsPointXY, QgsRectangle, QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QVariant  # noqa: E402
 
@@ -85,7 +84,7 @@ def _make_panel_layer(n_locations=9, n_times=10, with_anomaly=False):
     fields.append(QgsField("value", QVariant.Double))
 
     layer = QgsVectorLayer(
-        f"Polygon?crs=EPSG:32635&field=loc_id:string&field=time_step:integer&field=value:double",
+        "Polygon?crs=EPSG:32635&field=loc_id:string&field=time_step:integer&field=value:double",
         "synthetic_panel", "memory")
     dp = layer.dataProvider()
     dp.addAttributes(fields)
@@ -117,7 +116,7 @@ def _make_panel_layer(n_locations=9, n_times=10, with_anomaly=False):
         for t in range(n_times):
             # Add noise
             import random
-            rng = random.Random(idx * 1000 + t)
+            rng = random.Random(idx * 1000 + t)  # nosec B311
             noise = rng.gauss(0, 2.0)
             value = base + trend * t + noise
 
@@ -151,7 +150,7 @@ def _make_points_layer(n_points=30, n_times=3):
     layer.updateFields()
 
     import random
-    rng = random.Random(42)
+    rng = random.Random(42)  # nosec B311
 
     feats = []
     layer.startEditing()
@@ -172,10 +171,10 @@ def _make_vector_time_layers(n_layers=3):
     """Return list of polygon layers (one per time step) for cube builder."""
     layers = []
     import random
-    rng = random.Random(99)
+    rng = random.Random(99)  # nosec B311
     for t in range(n_layers):
         layer = QgsVectorLayer(
-            f"Polygon?crs=EPSG:32635&field=pop:double",
+            "Polygon?crs=EPSG:32635&field=pop:double",
             f"time_{t}", "memory")
         dp = layer.dataProvider()
         layer.startEditing()

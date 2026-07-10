@@ -88,7 +88,7 @@ def local_morans_i(
     lags: List[float] = []
     p_vals: List[float] = []
     clusters: List[int] = []
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # nosec B311 — deterministic permutation testing, not security-sensitive
 
     for i in range(n):
         row = adjacency[i] if i < len(adjacency) else []

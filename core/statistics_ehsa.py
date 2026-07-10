@@ -168,7 +168,6 @@ def mann_kendall_test(series: List[float]) -> Tuple[float, float, float]:
 
     # variance of S
     # handle ties
-    unique = sorted(set(series))
     tie_groups = {}
     for v in series:
         tie_groups[v] = tie_groups.get(v, 0) + 1

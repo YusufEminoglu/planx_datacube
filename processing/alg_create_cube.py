@@ -2,24 +2,22 @@
 """Create Data Cube — Processing algorithm."""
 from __future__ import annotations
 
-import os
 import math
 
 from qgis.core import (
     QgsFeature, QgsFeatureSink, QgsField, QgsFields, QgsGeometry,
-    QgsPointXY, QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
+    QgsProcessing, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterMultipleLayers, QgsProcessingParameterField,
     QgsProcessingParameterNumber, QgsProcessingParameterFileDestination,
     QgsProcessingParameterFolderDestination, QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSink, QgsProcessingOutputString,
-    QgsMapLayer, QgsVectorLayer, QgsRasterLayer, QgsRectangle, QgsWkbTypes,
+    QgsMapLayer, QgsRectangle, QgsWkbTypes,
 )
 from qgis.PyQt.QtCore import QVariant
 
 from ..core.cube_builder import (
     build_cube_from_vector_layers,
     build_cube_from_raster_stack,
-    DataCube,
 )
 from ._help_mixin import DataCubeHelpMixin
 
@@ -74,18 +72,18 @@ class CreateDataCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
         )
         self.addParameter(
             QgsProcessingParameterField(self.FIELD, "Value field",
-                                         parentLayerParameterName=self.LAYERS,
-                                         type=QgsProcessingParameterField.Numeric,
-                                         optional=True)
+                                        parentLayerParameterName=self.LAYERS,
+                                        type=QgsProcessingParameterField.Numeric,
+                                        optional=True)
         )
         self.addParameter(
             QgsProcessingParameterNumber(self.GRID_RES, "Grid cell size (map units)",
-                                          type=QgsProcessingParameterNumber.Double,
-                                          defaultValue=100.0, minValue=0.01)
+                                         type=QgsProcessingParameterNumber.Double,
+                                         defaultValue=100.0, minValue=0.01)
         )
         self.addParameter(
             QgsProcessingParameterEnum(self.CUBE_TYPE, "Input type",
-                                        options=[t[0] for t in self.TYPES], defaultValue=0)
+                                       options=[t[0] for t in self.TYPES], defaultValue=0)
         )
         self.addParameter(
             QgsProcessingParameterFileDestination(

@@ -1,0 +1,23 @@
+You are a senior QGIS plugin engineer. Your task is a long, meticulous, multi-phase implementation on the plugin `planx_datacube` ("PlanX DataCube Lab", inside the `qgis_plugins` monorepo).
+
+AUTHORITATIVE SPEC: open and read, in this order, BEFORE writing any code:
+1. qgis_plugins/AGENTS.md and qgis_plugins/RELEASING.md (monorepo conventions — mandatory)
+2. planx_datacube/ENHANCEMENT_PLAN_v1.3.md  ← this is your complete work order
+
+Execute ENHANCEMENT_PLAN_v1.3.md phases 1 → 6 strictly in order. Do not skip, merge, or reorder phases (Phase 5's two sub-items may each be explicitly SKIPPED per their own rules, but not silently). Do not start a phase until the previous phase's exit criteria are met and verified by running the stated commands yourself.
+
+Working style requirements:
+- This plugin starts from a healthier baseline than some siblings: it is already English-only with no bilingual UI machinery, and all 8 algorithms already have specific, non-boilerplate shortHelpString() text. Do not touch or regress either of those strengths. Your job is the remaining real gaps: helpUrl(), an e2e count-pin, a silent-fallback UX fix, lint cleanup, and a pytest conversion.
+- For Phase 1, open and read each of the 8 algorithm files before adding helpUrl() — confirm it doesn't change any algorithm's name()/displayName()/group()/groupId()/parameters.
+- For Phase 1's e2e re-run and Phase 6's final gate, actually run the e2e script via OSGeo4W (python-qgis-ltr.bat for QGIS 3.44, python-qgis.bat for QGIS 4.x) and capture the complete, unedited console output. Never claim a test passed without pasting its output. A working recipe/pattern for the OSGeo4W script-file invocation exists at qgis_plugins/scratch/suitlab_e2e_qgis.py if you need a reference (script files only — multiline `python -c` silently fails).
+- Never weaken or delete an existing assertion/check to make something pass. Fix the code instead. Any changed check expectation or form (including the Phase 4 pytest conversion, which must be a faithful mechanical translation, not a chance to drop assertions) must be justified in the report, Section 6, with the before/after assertion-count cross-check.
+- Make one commit per completed phase (or sub-phase) with messages like "phase-1: add helpUrl to all 8 algorithms + e2e count pin". No AI co-author trailers of any kind.
+- Do NOT bump the version, tag, actually cut/upload the release, or push a tag. Stop after the Phase 6 commit.
+- All user-facing text you write must be English. No "elite/best/ultimate/revolutionises"-style superlative wording anywhere (fix the existing "revolutionises" in metadata.txt during the Phase 6 version bump, not earlier). No literal % character in metadata.txt.
+- Phase 3 is scoped deliberately narrow — do not run a blanket autofix/reformat across the whole codebase, and explicitly do not touch tests/test_core.py's lint findings in Phase 3 (that's Phase 4's job, done as part of the pytest conversion so it's one coherent diff instead of two).
+
+DELIVERABLE: besides the code changes, produce planx_datacube/REPORT_v1.3.md following EXACTLY the template in Section R of the plan (all 8 sections, the 8-row algorithm table, verbatim test outputs). The reviewer will re-run your gates; any claim your evidence does not support invalidates the delivery.
+
+If you become blocked (missing tool, failing environment, ambiguous spec), do not improvise around the plan: record the blocker in REPORT_v1.3.md Section 7 with what you tried, mark the phase PARTIAL, and continue with the next independent work item.
+
+Begin now with the two monorepo docs, then Phase 1.

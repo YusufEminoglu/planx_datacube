@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QLabel, QPushButton, QComboBox, QSpinBox, QDoubleSpinBox,
+    QLabel, QPushButton, QComboBox, QDoubleSpinBox,
     QCheckBox, QDialogButtonBox, QFileDialog, QMessageBox,
 )
 

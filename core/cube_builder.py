@@ -12,16 +12,12 @@ Supports:
 from __future__ import annotations
 
 import math
-import os
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from qgis.core import (
-    QgsVectorLayer, QgsRasterLayer, QgsFeature, QgsGeometry,
-    QgsRectangle, QgsPointXY, QgsField, QgsFields, QgsFeatureSink,
-    QgsProcessingFeedback, QgsSpatialIndex,
+    QgsVectorLayer, QgsRasterLayer,
+    QgsRectangle, QgsProcessingFeedback, QgsSpatialIndex,
 )
-from qgis.PyQt.QtCore import QVariant
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +252,6 @@ def build_cube_from_raster_stack(
     if not first_raster.isValid():
         return None
 
-    prov = first_raster.dataProvider()
     ext = first_raster.extent()
     cols = first_raster.width()
     rows = first_raster.height()
