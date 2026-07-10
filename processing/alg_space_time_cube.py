@@ -17,11 +17,12 @@ from qgis.PyQt.QtCore import QVariant
 
 from ..core.panel import centroid_xy
 from ..core.cube_builder import DataCube
+from ._help_mixin import DataCubeHelpMixin
 
 MAX_PANEL_FEATURES = 3_000_000
 
 
-class SpaceTimeCubeAlgorithm(QgsProcessingAlgorithm):
+class SpaceTimeCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     INPUT = "INPUT"
     TIME_FIELD = "TIME_FIELD"
     VALUE_FIELD = "VALUE_FIELD"

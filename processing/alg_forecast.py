@@ -14,9 +14,10 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QVariant
 
 from ..core.forecasting_studio import forecast_cell_series
+from ._help_mixin import DataCubeHelpMixin
 
 
-class ForecastAlgorithm(QgsProcessingAlgorithm):
+class ForecastAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     INPUT = "INPUT"
     ID_FIELD = "ID_FIELD"
     TIME_FIELD = "TIME_FIELD"

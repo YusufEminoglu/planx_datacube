@@ -17,9 +17,10 @@ from ..core.timeseries_stats import (
 )
 from ..core.panel import read_panel
 from .symbology import attach_categorized_symbology
+from ._help_mixin import DataCubeHelpMixin
 
 
-class TemporalTrendAlgorithm(QgsProcessingAlgorithm):
+class TemporalTrendAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     INPUT = "INPUT"
     ID_FIELD = "ID_FIELD"
     TIME_FIELD = "TIME_FIELD"

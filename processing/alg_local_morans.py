@@ -14,9 +14,10 @@ from qgis.PyQt.QtCore import QVariant
 from ..core.local_morans import local_morans_i, LISA_LABELS, LISA_NS
 from ..core.spatial_weights import build_weights, neighbour_counts
 from ..core.panel import read_panel, centroid_xy
+from ._help_mixin import DataCubeHelpMixin
 
 
-class LocalMoransAlgorithm(QgsProcessingAlgorithm):
+class LocalMoransAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     INPUT = "INPUT"
     ID_FIELD = "ID_FIELD"
     TIME_FIELD = "TIME_FIELD"

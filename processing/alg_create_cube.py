@@ -21,9 +21,10 @@ from ..core.cube_builder import (
     build_cube_from_raster_stack,
     DataCube,
 )
+from ._help_mixin import DataCubeHelpMixin
 
 
-class CreateDataCubeAlgorithm(QgsProcessingAlgorithm):
+class CreateDataCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     LAYERS = "LAYERS"
     FIELD = "FIELD"
     GRID_RES = "GRID_RES"

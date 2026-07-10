@@ -15,13 +15,14 @@ from qgis.PyQt.QtCore import QVariant
 from ..core.forecasting_studio import backtest_series, BACKTEST_METHODS
 from ..core.panel import read_panel
 from .symbology import attach_categorized_symbology
+from ._help_mixin import DataCubeHelpMixin
 
 
 def _round(v):
     return round(v, 6) if isinstance(v, float) and math.isfinite(v) else None
 
 
-class ForecastBacktestAlgorithm(QgsProcessingAlgorithm):
+class ForecastBacktestAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     INPUT = "INPUT"
     ID_FIELD = "ID_FIELD"
     TIME_FIELD = "TIME_FIELD"

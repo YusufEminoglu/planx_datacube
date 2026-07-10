@@ -18,6 +18,7 @@ from ..core.statistics_ehsa import (
 )
 from ..core.spatial_weights import build_weights, neighbour_counts
 from ..core.panel import read_panel, centroid_xy
+from ._help_mixin import DataCubeHelpMixin
 
 
 class EHSASymbologyPostProcessor(QgsProcessingLayerPostProcessorInterface):
@@ -76,7 +77,7 @@ class EHSASymbologyPostProcessor(QgsProcessingLayerPostProcessorInterface):
         layer.triggerRepaint()
 
 
-class RunEHSAAlgorithm(QgsProcessingAlgorithm):
+class RunEHSAAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
     INPUT = "INPUT"
     ID_FIELD = "ID_FIELD"
     TIME_FIELD = "TIME_FIELD"
