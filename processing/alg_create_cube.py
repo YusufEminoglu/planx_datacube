@@ -73,12 +73,12 @@ class CreateDataCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterField(self.FIELD, "Value field",
                                         parentLayerParameterName=self.LAYERS,
-                                        type=QgsProcessingParameterField.Numeric,
+                                        type=QgsProcessingParameterField.DataType.Numeric,
                                         optional=True)
         )
         self.addParameter(
             QgsProcessingParameterNumber(self.GRID_RES, "Grid cell size (map units)",
-                                         type=QgsProcessingParameterNumber.Double,
+                                         type=QgsProcessingParameterNumber.Type.Double,
                                          defaultValue=100.0, minValue=0.01)
         )
         self.addParameter(
@@ -123,11 +123,11 @@ class CreateDataCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
         if self.TYPES[cube_type][1] == "raster":
             rasters = {lyr.name(): lyr.source() for lyr in layers
-                       if lyr.type() == QgsMapLayer.RasterLayer}
+                       if lyr.type() == QgsMapLayer.LayerType.RasterLayer}
             cube = build_cube_from_raster_stack(rasters, feedback=feedback)
         else:
             vectors = {lyr.name(): lyr for lyr in layers
-                       if lyr.type() == QgsMapLayer.VectorLayer}
+                       if lyr.type() == QgsMapLayer.LayerType.VectorLayer}
             if not field:
                 raise QgsProcessingException("A value field is required for vector input.")
             cube = build_cube_from_vector_layers(vectors, field, grid_res, feedback=feedback)
@@ -179,7 +179,7 @@ class CreateDataCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
             (sink, grid_id) = self.parameterAsSink(
                 parameters, self.OUTPUT_GRID, context,
-                out_fields, QgsWkbTypes.Polygon, crs,
+                out_fields, QgsWkbTypes.Type.Polygon, crs,
             )
             if sink:
                 t0 = cube.time_steps[0]
@@ -202,7 +202,7 @@ class CreateDataCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
                             val = cube.data[t0][var_name][yi][xi]
                             attrs.append(val if math.isfinite(val) else None)
                         feat.setAttributes(attrs)
-                        sink.addFeature(feat, QgsFeatureSink.FastInsert)
+                        sink.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
                         cell_count += 1
                         if cell_count % 500 == 0 and feedback:
                             feedback.setProgress(int(100 * cell_count / total_cells))

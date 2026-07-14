@@ -59,18 +59,18 @@ class ForecastBacktestAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.INPUT, "Input panel data layer", [QgsProcessing.TypeVectorAnyGeometry]))
+            self.INPUT, "Input panel data layer", [QgsProcessing.SourceType.TypeVectorAnyGeometry]))
         self.addParameter(QgsProcessingParameterField(
             self.ID_FIELD, "Location ID field", parentLayerParameterName=self.INPUT))
         self.addParameter(QgsProcessingParameterField(
             self.TIME_FIELD, "Time step field (numeric)", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterField(
             self.VALUE_FIELD, "Value field", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterNumber(
             self.HOLDOUT, "Hold-out length (steps)",
-            type=QgsProcessingParameterNumber.Integer,
+            type=QgsProcessingParameterNumber.Type.Integer,
             defaultValue=3, minValue=1, maxValue=50))
         self.addParameter(QgsProcessingParameterFeatureSink(
             self.OUTPUT, "Backtest output"))
@@ -155,7 +155,7 @@ class ForecastBacktestAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
             feat = QgsFeature(out_fields)
             feat.setGeometry(panel.loc_geom.get(loc, QgsGeometry()))
             feat.setAttributes(row)
-            sink.addFeature(feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
             feedback.setProgress(int(100 * i / total))
 
         summary = ", ".join(f"{m}: {c}" for m, c in sorted(best_counts.items()))

@@ -72,15 +72,15 @@ class LocalMoransAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.INPUT, "Input panel data layer", [QgsProcessing.TypeVectorAnyGeometry]))
+            self.INPUT, "Input panel data layer", [QgsProcessing.SourceType.TypeVectorAnyGeometry]))
         self.addParameter(QgsProcessingParameterField(
             self.ID_FIELD, "Location ID field", parentLayerParameterName=self.INPUT))
         self.addParameter(QgsProcessingParameterField(
             self.TIME_FIELD, "Time step field (numeric)", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterField(
             self.VALUE_FIELD, "Value field", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterEnum(
             self.TIME_AGG, "Temporal aggregation",
             options=[a[0] for a in self.AGG_MODES], defaultValue=0))
@@ -89,19 +89,19 @@ class LocalMoransAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
             options=[m[0] for m in self.SPATIAL_MODES], defaultValue=1))
         self.addParameter(QgsProcessingParameterNumber(
             self.DISTANCE, "Distance band (map units; 0 = auto)",
-            type=QgsProcessingParameterNumber.Double,
+            type=QgsProcessingParameterNumber.Type.Double,
             defaultValue=0.0, minValue=0.0, optional=True))
         self.addParameter(QgsProcessingParameterNumber(
             self.N_NEIGHBORS, "Number of neighbours (KNN)",
-            type=QgsProcessingParameterNumber.Integer,
+            type=QgsProcessingParameterNumber.Type.Integer,
             defaultValue=8, minValue=1, maxValue=100, optional=True))
         self.addParameter(QgsProcessingParameterNumber(
             self.PERMUTATIONS, "Permutations",
-            type=QgsProcessingParameterNumber.Integer,
+            type=QgsProcessingParameterNumber.Type.Integer,
             defaultValue=999, minValue=0, maxValue=9999))
         self.addParameter(QgsProcessingParameterNumber(
             self.P_THRESHOLD, "Significance threshold (pseudo p-value)",
-            type=QgsProcessingParameterNumber.Double,
+            type=QgsProcessingParameterNumber.Type.Double,
             defaultValue=0.05, minValue=0.001, maxValue=0.2))
         self.addParameter(QgsProcessingParameterFeatureSink(
             self.OUTPUT, "LISA cluster/outlier output"))
@@ -199,7 +199,7 @@ class LocalMoransAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
                 round(res["z"][i], 6), round(res["lag"][i], 6),
                 round(res["p"][i], 6), code, LISA_LABELS[code],
             ])
-            sink.addFeature(feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
             feedback.setProgress(int(100 * i / len(loc_sorted)))
 
         feedback.pushInfo(f"Significant clusters/outliers: {sig}/{len(loc_sorted)}")

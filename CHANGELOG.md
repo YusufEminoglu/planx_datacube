@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.3] - 2026-07-14
+
+- Fix QGIS 4 / Qt6 compatibility issues by fully scoping Processing and Layout enums
+
 ## [1.3.2] - 2026-07-14
 
 - Add pattern classification frequency report to EHSA and clean security warnings

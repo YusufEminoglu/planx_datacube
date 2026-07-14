@@ -64,7 +64,7 @@ def create_time_slice_layout(
 
     page = layout.pageCollection().page(0)
     page.setPageSize(QgsLayoutSize(page_width_mm, page_height_mm,
-                                   QgsUnitTypes.LayoutMillimeters))
+                                   QgsUnitTypes.LayoutUnit.LayoutMillimeters))
 
     # compute a common extent
     extent = QgsRectangle(layers_by_time[0].extent())
@@ -97,7 +97,7 @@ def create_time_slice_layout(
             x = spacing_mm + i * (map_w * 0.3)
             y = page_height_mm - map_h - spacing_mm - i * (map_h * 0.3)
 
-        map_item.attemptMove(QgsLayoutPoint(x, y, QgsUnitTypes.LayoutMillimeters))
+        map_item.attemptMove(QgsLayoutPoint(x, y, QgsUnitTypes.LayoutUnit.LayoutMillimeters))
 
         # Save corners for drawing connector lines
         if i == 0:
@@ -118,7 +118,7 @@ def create_time_slice_layout(
         label_item.setFont(font)
         label_item.adjustSizeToText()
         label_item.attemptMove(
-            QgsLayoutPoint(x, y - 7, QgsUnitTypes.LayoutMillimeters)
+            QgsLayoutPoint(x, y - 7, QgsUnitTypes.LayoutUnit.LayoutMillimeters)
         )
         layout.addLayoutItem(label_item)
         layout.addLayoutItem(map_item)
@@ -151,7 +151,7 @@ def create_time_slice_layout(
     title.setFont(title_font)
     title.adjustSizeToText()
     title.attemptMove(QgsLayoutPoint(
-        page_width_mm / 2 - 60, 2, QgsUnitTypes.LayoutMillimeters
+        page_width_mm / 2 - 60, 2, QgsUnitTypes.LayoutUnit.LayoutMillimeters
     ))
     layout.addLayoutItem(title)
 

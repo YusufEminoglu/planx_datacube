@@ -74,22 +74,22 @@ class SpaceTimeCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.INPUT, "Input events layer", [QgsProcessing.TypeVectorAnyGeometry]))
+            self.INPUT, "Input events layer", [QgsProcessing.SourceType.TypeVectorAnyGeometry]))
         self.addParameter(QgsProcessingParameterField(
             self.TIME_FIELD, "Time field (numeric)", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterField(
             self.VALUE_FIELD, "Value field (leave empty to count events)",
             parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric, optional=True))
+            type=QgsProcessingParameterField.DataType.Numeric, optional=True))
         self.addParameter(QgsProcessingParameterEnum(
             self.AGG, "Aggregation", options=[a[0] for a in self.AGG_MODES], defaultValue=0))
         self.addParameter(QgsProcessingParameterNumber(
             self.GRID_SIZE, "Grid cell size (map units)",
-            type=QgsProcessingParameterNumber.Double, defaultValue=1000.0, minValue=1e-6))
+            type=QgsProcessingParameterNumber.Type.Double, defaultValue=1000.0, minValue=1e-6))
         self.addParameter(QgsProcessingParameterNumber(
             self.TIME_STEP, "Time step size (0 = one bin per distinct time value)",
-            type=QgsProcessingParameterNumber.Double, defaultValue=0.0, minValue=0.0,
+            type=QgsProcessingParameterNumber.Type.Double, defaultValue=0.0, minValue=0.0,
             optional=True))
         self.addParameter(QgsProcessingParameterBoolean(
             self.DROP_EMPTY, "Keep only grid cells that contain data", defaultValue=True))
@@ -232,7 +232,7 @@ class SpaceTimeCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
         (sink, dest_id) = self.parameterAsSink(
             parameters, self.OUTPUT, context,
-            out_fields, QgsWkbTypes.Polygon, source.sourceCrs())
+            out_fields, QgsWkbTypes.Type.Polygon, source.sourceCrs())
 
         if drop_empty:
             target_cells = sorted(cells_with_data)
@@ -261,7 +261,7 @@ class SpaceTimeCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
                     cell_id, col, row, b, round(time_values[b], 6),
                     round(value, 6) if value is not None else None, cnt,
                 ])
-                sink.addFeature(feat, QgsFeatureSink.FastInsert)
+                sink.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
                 written += 1
             feedback.setProgress(int(100 * idx / total))
 

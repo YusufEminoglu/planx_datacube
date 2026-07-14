@@ -55,18 +55,18 @@ class TemporalTrendAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.INPUT, "Input panel data layer", [QgsProcessing.TypeVectorAnyGeometry]))
+            self.INPUT, "Input panel data layer", [QgsProcessing.SourceType.TypeVectorAnyGeometry]))
         self.addParameter(QgsProcessingParameterField(
             self.ID_FIELD, "Location ID field", parentLayerParameterName=self.INPUT))
         self.addParameter(QgsProcessingParameterField(
             self.TIME_FIELD, "Time step field (numeric)", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterField(
             self.VALUE_FIELD, "Value field", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterNumber(
             self.P_THRESHOLD, "Significance threshold (p-value)",
-            type=QgsProcessingParameterNumber.Double,
+            type=QgsProcessingParameterNumber.Type.Double,
             defaultValue=0.05, minValue=0.001, maxValue=0.2))
         self.addParameter(QgsProcessingParameterFeatureSink(
             self.OUTPUT, "Temporal trend output"))
@@ -119,7 +119,7 @@ class TemporalTrendAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
                 loc, len(series), round(tau, 6), round(p_mk, 6),
                 round(slope, 6), round(intercept, 6), code, TREND_LABELS[code],
             ])
-            sink.addFeature(feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
             feedback.setProgress(int(100 * i / total))
 
         feedback.pushInfo(

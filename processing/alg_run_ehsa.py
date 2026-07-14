@@ -126,29 +126,29 @@ class RunEHSAAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.INPUT, "Input panel data layer", [QgsProcessing.TypeVectorAnyGeometry]))
+            self.INPUT, "Input panel data layer", [QgsProcessing.SourceType.TypeVectorAnyGeometry]))
         self.addParameter(QgsProcessingParameterField(
             self.ID_FIELD, "Location ID field", parentLayerParameterName=self.INPUT))
         self.addParameter(QgsProcessingParameterField(
             self.TIME_FIELD, "Time step field (numeric)", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterField(
             self.VALUE_FIELD, "Value field", parentLayerParameterName=self.INPUT,
-            type=QgsProcessingParameterField.Numeric))
+            type=QgsProcessingParameterField.DataType.Numeric))
         self.addParameter(QgsProcessingParameterNumber(
             self.P_THRESHOLD, "Significance threshold (p-value)",
-            type=QgsProcessingParameterNumber.Double,
+            type=QgsProcessingParameterNumber.Type.Double,
             defaultValue=0.05, minValue=0.001, maxValue=0.2))
         self.addParameter(QgsProcessingParameterEnum(
             self.SPATIAL_REL, "Spatial relationship (Gi* neighbourhood)",
             options=[m[0] for m in self.SPATIAL_MODES], defaultValue=1))
         self.addParameter(QgsProcessingParameterNumber(
             self.DISTANCE, "Distance band (map units; 0 = auto)",
-            type=QgsProcessingParameterNumber.Double,
+            type=QgsProcessingParameterNumber.Type.Double,
             defaultValue=0.0, minValue=0.0, optional=True))
         self.addParameter(QgsProcessingParameterNumber(
             self.N_NEIGHBORS, "Number of neighbours (KNN)",
-            type=QgsProcessingParameterNumber.Integer,
+            type=QgsProcessingParameterNumber.Type.Integer,
             defaultValue=8, minValue=1, maxValue=100, optional=True))
         self.addParameter(QgsProcessingParameterFeatureSink(
             self.OUTPUT, "EHSA classified output"))
@@ -258,7 +258,7 @@ class RunEHSAAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
                 round(p_mk, 6),
                 round(slope, 6),
             ])
-            sink.addFeature(feat, QgsFeatureSink.FastInsert)
+            sink.addFeature(feat, QgsFeatureSink.Flag.FastInsert)
             feedback.setProgress(int(100 * i / total))
 
         # Count and report pattern frequencies to the Processing log
