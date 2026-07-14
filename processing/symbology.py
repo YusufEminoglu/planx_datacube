@@ -62,11 +62,9 @@ class CategorizedPostProcessor(QgsProcessingLayerPostProcessorInterface):
                 layer.setRenderer(renderer)
                 layer.triggerRepaint()
         except Exception as exc:  # pragma: no cover - styling must never break a run
-            try:
+            from contextlib import suppress
+            with suppress(Exception):
                 feedback.pushWarning(f"Could not apply automatic symbology: {exc}")
-            except Exception:
-                # Swallow — postProcessLayer has no fallback channel if pushWarning itself fails.
-                pass
 
 
 def attach_categorized_symbology(context, dest_id, output_key, field, entries, feedback=None) -> None:
@@ -84,7 +82,6 @@ def attach_categorized_symbology(context, dest_id, output_key, field, entries, f
             _KEEP_ALIVE.append(pp)
     except Exception as exc:
         if feedback is not None:
-            try:
+            from contextlib import suppress
+            with suppress(Exception):
                 feedback.pushWarning(f"Could not register symbology: {exc}")
-            except Exception:
-                pass

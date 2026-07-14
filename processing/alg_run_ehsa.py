@@ -261,6 +261,17 @@ class RunEHSAAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
             sink.addFeature(feat, QgsFeatureSink.FastInsert)
             feedback.setProgress(int(100 * i / total))
 
+        # Count and report pattern frequencies to the Processing log
+        pattern_counts = {}
+        for p in patterns:
+            pattern_counts[p] = pattern_counts.get(p, 0) + 1
+
+        feedback.pushInfo("\nEHSA Classified Patterns Summary:")
+        for code, count in sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True):
+            label = EHSA_LABELS.get(code, "Unknown")
+            feedback.pushInfo(f"  - {label}: {count} locations ({(count / total) * 100:.1f}%)")
+        feedback.pushInfo("")
+
         # Register post-processor for automatic layer styling
         try:
             if context.willLoadLayerOnCompletion(dest_id):

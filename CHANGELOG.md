@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.2] - 2026-07-14
+
+- Add pattern classification frequency report to EHSA and clean security warnings
+
 ## [1.3.0] - 2026-07-10
 
 ### Added

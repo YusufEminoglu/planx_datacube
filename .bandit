@@ -1,0 +1,6 @@
+[bandit]
+# PlanX DataCube Lab security scan — reviewed-safe, skippable warning-level rules.
+# See ../SECURITY_SCANNING.md.
+#   B404 = subprocess import (required by the optional pip dependency manager)
+#   B603 = subprocess call (untrusted input checked/sanitized in code)
+skips = B404,B603
