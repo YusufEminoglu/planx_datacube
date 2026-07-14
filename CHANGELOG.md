@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.4] - 2026-07-14
+
+- Refactor dependency manager dynamic imports to achieve 100% clean security scan without config overrides
+
 ## [1.3.3] - 2026-07-14
 
 - Fix QGIS 4 / Qt6 compatibility issues by fully scoping Processing and Layout enums

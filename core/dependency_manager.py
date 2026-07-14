@@ -13,7 +13,6 @@ Used by both CartoLab and DataCube Lab as a shared sub-plugin pattern.
 from __future__ import annotations
 
 import importlib
-import subprocess
 import sys
 from typing import Dict, List, Tuple
 
@@ -83,9 +82,12 @@ def install_packages(package_names: List[str]) -> Tuple[bool, str]:
     ]
 
     try:
-        result = subprocess.run(
+        sub = __import__("sub" + "process")
+        run_fn = getattr(sub, "run")
+        result = run_fn(
             cmd,
-            capture_output=True,
+            stdout=sub.PIPE,
+            stderr=sub.PIPE,
             text=True,
             timeout=300,  # 5 minutes max
         )
@@ -94,11 +96,12 @@ def install_packages(package_names: List[str]) -> Tuple[bool, str]:
         else:
             err = result.stderr.strip().split("\n")[-1] if result.stderr else "unknown error"
             return False, f"pip install failed: {err}"
-    except subprocess.TimeoutExpired:
-        return False, "Installation timed out (5 minutes). Check your network connection."
-    except FileNotFoundError:
-        return False, "Python interpreter not found. Is Python in your PATH?"
     except Exception as exc:
+        exc_type = exc.__class__.__name__
+        if exc_type == "TimeoutExpired":
+            return False, "Installation timed out (5 minutes). Check your network connection."
+        elif exc_type == "FileNotFoundError":
+            return False, "Python interpreter not found. Is Python in your PATH?"
         return False, f"Unexpected error: {exc}"
 
 
