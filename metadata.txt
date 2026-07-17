@@ -1,6 +1,6 @@
 [general]
 name=PlanX DataCube Lab
-version=1.3.4
+version=1.3.5
 hasProcessingProvider=yes
 
 category=Processing
@@ -22,6 +22,7 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 
 changelog=
+    PlanX DataCube Lab 1.3.5 — Dependency panel no longer executes pip: the Copy Install Command button builds the exact install command for the QGIS Python and copies it to the clipboard; all process-spawning code removed and guarded by a regression test.
     PlanX DataCube Lab 1.3.1 — Fixed QGIS Hub security-scan block: removed accidentally-tracked .pytest_cache (false-positive high-entropy secret) and now gitignored, cleared all 9 remaining flake8 findings (W503/E261).
     PlanX DataCube Lab 1.3.0 — Toolbox documentation links for all 8 algorithms (helpUrl), e2e algorithm-count regression guard, forecasting-fallback warnings surfaced to the Processing log, test suite converted to pytest (97 assertions preserved), lint cleanup (flake8 59→7 findings), command guide added, CITATION.cff version consistency fix.
     PlanX DataCube Lab 1.2.0 — Five new spatiotemporal tools plus a scientific EHSA upgrade, end-to-end tested on QGIS 3.44 and QGIS 4: Space-Time Cube Aggregation (bin events into a fishnet x time panel feeding every analysis tool); EHSA Getis-Ord Gi* now uses true spatial neighbourhoods (fixed distance band or K-nearest) instead of a global z-score; Local Outlier Analysis (Anselin Local Moran's I) with conditional-permutation significance; Temporal Trend Analysis (Mann-Kendall + Theil-Sen); Temporal Anomaly Detection (robust median/MAD z-score); Forecast Backtest (hold-out MAE/RMSE/MAPE per method). Categorical outputs arrive auto-styled.

@@ -407,17 +407,23 @@ class TestDependencyManager:
         report = dm.get_status_report(dm.DATA_CUBE_DEPS, "DATACUBE")
         assert "DATACUBE" in report
 
-    def test_install_empty_ok(self):
-        ok, msg = dm.install_packages([])
-        assert ok
+    def test_install_command_empty(self):
+        assert dm.pip_install_command([]) == ""
 
-    def test_install_nonexistent_fails_gracefully(self):
-        ok, msg = dm.install_packages(["nonexistent-package-12345xyz"])
-        assert isinstance(ok, bool)
+    def test_install_command_builds_pip_line(self):
+        cmd = dm.pip_install_command(["statsmodels", "zarr"])
+        assert "-m pip install --upgrade statsmodels zarr" in cmd
+        assert sys.executable in cmd
 
-    def test_ensure_required_returns_bool(self):
-        result = dm.ensure_required(dm.DATA_CUBE_DEPS, auto_install=False)
-        assert isinstance(result, bool)
+    def test_no_runtime_installer(self):
+        # The plugin must never execute pip itself (QGIS Hub security policy);
+        # also guard against obfuscated process spawning ever coming back.
+        assert not hasattr(dm, "install_packages")
+        assert not hasattr(dm, "ensure_required")
+        with open(dm.__file__, encoding="utf-8") as fh:
+            src = fh.read()
+        assert "subprocess" not in src
+        assert "__import__" not in src
 
 
 # ===================================================================

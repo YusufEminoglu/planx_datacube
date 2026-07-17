@@ -291,7 +291,7 @@ class DataCubeDashboard(QDialog):
         btn_check = QPushButton("Check Dependencies")
         btn_check.clicked.connect(self._on_check_deps)
         sr.addWidget(btn_check)
-        btn_install = QPushButton("Install Missing (pip)")
+        btn_install = QPushButton("Copy Install Command")
         btn_install.clicked.connect(self._on_install_deps)
         sr.addWidget(btn_install)
         sr.addStretch()
@@ -666,35 +666,26 @@ class DataCubeDashboard(QDialog):
         self.setup_status.setPlainText(report)
 
     def _on_install_deps(self) -> None:
-        from ..core.dependency_manager import check_packages, install_packages, DATA_CUBE_DEPS
+        from ..core.dependency_manager import check_packages, pip_install_command, DATA_CUBE_DEPS
         _, missing_req, missing_opt = check_packages(DATA_CUBE_DEPS)
         all_missing = missing_req + missing_opt
         if not all_missing:
             QMessageBox.information(self, "DataCube Setup", "All dependencies already installed.")
             return
-        msg = (
-            "The following packages will be installed via pip:\n\n" +
-            "\n".join(f"  - {p}" for p in all_missing) +
-            "\n\nThis may take several minutes (scikit-learn, statsmodels are large).\n"
-            "QGIS restart recommended afterwards.\n\nContinue?"
+        cmd = pip_install_command(all_missing)
+        QApplication.clipboard().setText(cmd)
+        self.setup_status.setPlainText(
+            "Missing packages:\n"
+            + "\n".join(f"  - {p}" for p in all_missing)
+            + "\n\nThe plugin does not run pip itself. The exact install command has "
+            "been copied to your clipboard — paste it into the OSGeo4W Shell "
+            "(or your system terminal) and run it:\n\n"
+            + cmd
+            + "\n\nRestart QGIS afterwards, then click Check Dependencies again."
         )
-        if QMessageBox.question(
-            self,
-            "Install Dependencies",
-            msg,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        ) != QMessageBox.StandardButton.Yes:
-            return
-        self.setup_status.setPlainText("Installing... this may take a few minutes.\n")
-        ok, output = install_packages(all_missing)
-        self.setup_status.append(output)
-        if ok:
-            self.setup_status.append("\nDone. Restart QGIS for changes to take effect.")
-            self.iface.messageBar().pushSuccess("DataCube Lab", "Dependencies installed. Restart QGIS recommended.")
-        else:
-            self.setup_status.append("\nErrors occurred. See output above.")
-            self.iface.messageBar().pushCritical("DataCube Lab", "Installation failed.")
+        self.iface.messageBar().pushSuccess(
+            "DataCube Lab", "pip install command copied to clipboard."
+        )
 
     # ── Resize / keyboard ────────────────────────────────────────────
 

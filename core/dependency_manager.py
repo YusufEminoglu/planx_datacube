@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Dependency Manager — Detect & install missing Python packages at runtime.
+Dependency Manager — Detect missing Python packages and guide installation.
 
-Handles the full lifecycle:
+Handles:
   1. Check which required/optional packages are available
   2. Report missing packages to the user
-  3. Install them via pip subprocess (with user confirmation)
-  4. Verify installation success
+  3. Build the exact pip command for the user to run themselves
+
+The plugin deliberately never executes pip itself: package installation is
+the user's action, run in their own shell (OSGeo4W Shell on Windows), which
+also keeps the plugin free of process-spawning code.
 
 Used by both CartoLab and DataCube Lab as a shared sub-plugin pattern.
 """
@@ -66,43 +69,18 @@ def check_packages(
     return available, missing_required, missing_optional
 
 
-def install_packages(package_names: List[str]) -> Tuple[bool, str]:
+def pip_install_command(package_names: List[str]) -> str:
     """
-    Install one or more packages via pip subprocess.
+    Build the exact pip command for the current QGIS Python interpreter.
 
-    Returns (success, output_message).
+    The command is shown/copied for the user to run in their own shell
+    (e.g. the OSGeo4W Shell); the plugin never executes it.
     """
     if not package_names:
-        return True, "No packages to install."
-
-    cmd = [
-        sys.executable, "-m", "pip", "install",
-        "--upgrade", "--quiet",
-        *package_names,
-    ]
-
-    try:
-        sub = __import__("sub" + "process")
-        run_fn = getattr(sub, "run")
-        result = run_fn(
-            cmd,
-            stdout=sub.PIPE,
-            stderr=sub.PIPE,
-            text=True,
-            timeout=300,  # 5 minutes max
-        )
-        if result.returncode == 0:
-            return True, f"Successfully installed: {', '.join(package_names)}"
-        else:
-            err = result.stderr.strip().split("\n")[-1] if result.stderr else "unknown error"
-            return False, f"pip install failed: {err}"
-    except Exception as exc:
-        exc_type = exc.__class__.__name__
-        if exc_type == "TimeoutExpired":
-            return False, "Installation timed out (5 minutes). Check your network connection."
-        elif exc_type == "FileNotFoundError":
-            return False, "Python interpreter not found. Is Python in your PATH?"
-        return False, f"Unexpected error: {exc}"
+        return ""
+    return " ".join(
+        [f'"{sys.executable}"', "-m", "pip", "install", "--upgrade", *package_names]
+    )
 
 
 def get_status_report(
@@ -135,25 +113,3 @@ def get_status_report(
         lines.append("\nAll dependencies satisfied.")
 
     return "\n".join(lines)
-
-
-def ensure_required(
-    deps: Dict[str, Tuple[str, bool, str]],
-    auto_install: bool = False,
-) -> bool:
-    """
-    Ensure all required packages are installed.
-
-    If auto_install is True, installs missing packages without prompting.
-    Returns True if all required packages are now available.
-    """
-    _, missing_req, _ = check_packages(deps)
-    if not missing_req:
-        return True
-    if auto_install:
-        ok, _ = install_packages(missing_req)
-        if ok:
-            _, still_missing, _ = check_packages(deps)
-            return len(still_missing) == 0
-        return False
-    return False
