@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.7] - 2026-08-07
+
+- Add floating Save as PDF button to reference manual
+
 ## [1.3.6] - 2026-08-07
 
 - Add comprehensive academic reference manual: 8 algorithms, 1.5K lines, 59 refs
