@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlanX DataCube Lab &mdash; Academic Reference Manual</title>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    tags: 'ams'
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<style>
+:root {
+  --navy: #1a2332;
+  --slate: #2d3e50;
+  --accent: #3a7ca5;
+  --gold: #d4a843;
+  --paper: #f8f9fa;
+  --text: #212529;
+  --muted: #6c757d;
+  --border: #dee2e6;
+  --white: #ffffff;
+  --sidebar-w: 280px;
+  --header-h: 64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'Segoe UI', 'Liberation Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background: var(--paper);
+  line-height: 1.7;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: var(--header-h);
+  background: var(--navy);
+  color: var(--white);
+  display: flex; align-items: center; padding: 0 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+header .logo { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.02em; }
+header .logo span { color: var(--gold); }
+header .version {
+  margin-left: auto; font-size: 0.8rem; color: var(--muted);
+  background: rgba(255,255,255,0.08); padding: 0.25rem 0.7rem; border-radius: 4px;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.layout { display: flex; margin-top: var(--header-h); min-height: calc(100vh - var(--header-h)); }
+
+/* ── Sidebar ────────────────────────────────────────────── */
+.sidebar {
+  position: fixed; top: var(--header-h); left: 0;
+  width: var(--sidebar-w); height: calc(100vh - var(--header-h));
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 1.25rem 0 2rem;
+  z-index: 500;
+}
+.sidebar .toc-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); padding: 0 1.25rem; margin-bottom: 0.75rem;
+}
+.sidebar .search-wrap {
+  padding: 0 1.25rem; margin-bottom: 1rem;
+}
+.sidebar .search-wrap input {
+  width: 100%; padding: 0.45rem 0.7rem; font-size: 0.85rem;
+  border: 1px solid var(--border); border-radius: 6px;
+  outline: none; transition: border-color 0.2s;
+}
+.sidebar .search-wrap input:focus { border-color: var(--accent); }
+.sidebar a {
+  display: block; padding: 0.4rem 1.25rem; font-size: 0.88rem;
+  color: var(--slate); text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sidebar a:hover, .sidebar a:focus { background: rgba(58,124,165,0.06); }
+.sidebar a.active { border-left-color: var(--accent); color: var(--accent); font-weight: 600; background: rgba(58,124,165,0.05); }
+.sidebar .toc-l1 { font-weight: 600; color: var(--navy); margin-top: 0.3rem; font-size: 0.9rem; }
+.sidebar .toc-l2 { padding-left: 2.25rem; font-size: 0.83rem; color: var(--muted); }
+.sidebar .no-results {
+  text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 0.85rem; display: none;
+}
+
+/* ── Main ───────────────────────────────────────────────── */
+main {
+  margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 4rem;
+  max-width: 900px;
+  width: 100%;
+}
+main h1 { font-size: 2rem; color: var(--navy); margin-bottom: 0.35rem; }
+main h2 { font-size: 1.5rem; color: var(--navy); margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--accent); }
+main h3 { font-size: 1.15rem; color: var(--slate); margin: 1.6rem 0 0.6rem; }
+main h4 { font-size: 1rem; color: var(--accent); margin: 1.2rem 0 0.4rem; }
+main p  { margin-bottom: 0.85rem; }
+main .abstract {
+  background: var(--white); border-left: 4px solid var(--gold);
+  padding: 1rem 1.3rem; border-radius: 0 6px 6px 0; margin-bottom: 2rem;
+  font-size: 0.95rem; color: var(--slate);
+}
+
+/* ── Algorithm card ─────────────────────────────────────── */
+.alg-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 1.8rem 0 2.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  scroll-margin-top: calc(var(--header-h) + 1rem);
+}
+.alg-card .alg-head {
+  background: var(--navy); color: var(--white);
+  padding: 1rem 1.4rem; border-radius: 8px 8px 0 0;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1rem;
+}
+.alg-card .alg-head .alg-id { font-size: 0.8rem; color: var(--gold); font-weight: 600; letter-spacing: 0.04em; }
+.alg-card .alg-head h2 { color: var(--white); border: none; margin: 0; padding: 0; font-size: 1.3rem; }
+.alg-card .alg-body { padding: 1.4rem; }
+
+/* ── Parameters table ───────────────────────────────────── */
+.param-table {
+  width: 100%; border-collapse: collapse; margin: 1rem 0 1.4rem;
+  font-size: 0.9rem;
+}
+.param-table thead { background: var(--slate); color: var(--white); }
+.param-table th {
+  padding: 0.55rem 0.8rem; text-align: left; font-weight: 600; font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+.param-table td {
+  padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.param-table tr:nth-child(even) td { background: rgba(58,124,165,0.03); }
+.param-table code {
+  font-size: 0.82rem; background: var(--paper); padding: 0.15rem 0.4rem;
+  border-radius: 3px; color: var(--accent); white-space: nowrap;
+}
+
+/* ── References ─────────────────────────────────────────── */
+.ref-list { font-size: 0.88rem; }
+.ref-list li {
+  margin-bottom: 0.45rem; word-break: break-word;
+}
+.ref-list a { color: var(--accent); text-decoration: none; }
+.ref-list a:hover { text-decoration: underline; }
+
+/* ── Equations ──────────────────────────────────────────── */
+.math-block {
+  margin: 1rem 0; padding: 0.6rem 0;
+  overflow-x: auto;
+}
+
+/* ── Output description ─────────────────────────────────── */
+.output-block {
+  background: var(--paper); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1rem 1.2rem; margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.output-block code {
+  font-size: 0.82rem; background: var(--white); padding: 0.15rem 0.4rem;
+  border-radius: 3px; color: var(--accent);
+}
+
+/* ── Badge ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block; font-size: 0.72rem; font-weight: 600;
+  padding: 0.2rem 0.55rem; border-radius: 4px; letter-spacing: 0.03em;
+}
+.badge-gold { background: var(--gold); color: var(--navy); }
+.badge-accent { background: var(--accent); color: var(--white); }
+.badge-slate { background: var(--slate); color: var(--white); }
+
+/* ── Search highlight ───────────────────────────────────── */
+mark.search-hl { background: #ffe08a; padding: 0 2px; border-radius: 2px; }
+
+/* ── Footer ─────────────────────────────────────────────── */
+footer {
+  margin-left: var(--sidebar-w); text-align: center;
+  padding: 2rem 3rem; color: var(--muted); font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  main { padding: 2rem; }
+}
+@media (max-width: 768px) {
+  .sidebar {
+    position: static; width: 100%; height: auto; max-height: 35vh;
+    border-right: none; border-bottom: 1px solid var(--border);
+  }
+  .layout { flex-direction: column; }
+  main { margin-left: 0; padding: 1.5rem; }
+  footer { margin-left: 0; }
+  header .version { display: none; }
+  .alg-card .alg-head { flex-direction: column; gap: 0.2rem; }
+}
+
+/* ── Print ──────────────────────────────────────────────── */
+@media print {
+  .sidebar, header { display: none; }
+  main, footer { margin-left: 0; }
+  .alg-card { box-shadow: none; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PlanX <span>DataCube</span> Lab</div>
+  <div class="version">Academic Reference Manual &bull; v1.3.5</div>
+</header>
+
+<div class="layout">
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="toc-title">Table of Contents</div>
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="Search algorithms&hellip;" autocomplete="off">
+  </div>
+  <a href="#preface" class="toc-l1">Preface</a>
+  <a href="#algorithm-1" class="toc-l1">1. Build Spatiotemporal Data Cube</a>
+  <a href="#algorithm-1-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-1-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-1-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-1-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-1-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-1-refs" class="toc-l2">References</a>
+  <a href="#algorithm-2" class="toc-l1">2. Space-Time Cube Aggregation</a>
+  <a href="#algorithm-2-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-2-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-2-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-2-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-2-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-2-refs" class="toc-l2">References</a>
+  <a href="#algorithm-3" class="toc-l1">3. Emerging Hot Spot Analysis (EHSA)</a>
+  <a href="#algorithm-3-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-3-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-3-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-3-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-3-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-3-refs" class="toc-l2">References</a>
+  <a href="#algorithm-4" class="toc-l1">4. Local Outlier Analysis</a>
+  <a href="#algorithm-4-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-4-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-4-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-4-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-4-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-4-refs" class="toc-l2">References</a>
+  <a href="#algorithm-5" class="toc-l1">5. Temporal Trend Analysis</a>
+  <a href="#algorithm-5-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-5-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-5-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-5-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-5-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-5-refs" class="toc-l2">References</a>
+  <a href="#algorithm-6" class="toc-l1">6. Temporal Anomaly Detection</a>
+  <a href="#algorithm-6-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-6-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-6-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-6-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-6-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-6-refs" class="toc-l2">References</a>
+  <a href="#algorithm-7" class="toc-l1">7. Forecast Backtest</a>
+  <a href="#algorithm-7-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-7-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-7-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-7-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-7-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-7-refs" class="toc-l2">References</a>
+  <a href="#algorithm-8" class="toc-l1">8. Time-Series Forecast</a>
+  <a href="#algorithm-8-theory" class="toc-l2">Theoretical Background</a>
+  <a href="#algorithm-8-math" class="toc-l2">Mathematical Formulation</a>
+  <a href="#algorithm-8-params" class="toc-l2">Parameters</a>
+  <a href="#algorithm-8-output" class="toc-l2">Output Description</a>
+  <a href="#algorithm-8-interp" class="toc-l2">Interpretation Guide</a>
+  <a href="#algorithm-8-refs" class="toc-l2">References</a>
+  <div class="no-results" id="no-results">No matching algorithms found.</div>
+</nav>
+
+<!-- ═══════════════════ MAIN ══════════════════════════════ -->
+<main id="main-content">
+
+<h1>PlanX DataCube Lab</h1>
+<p><strong>Academic Reference Manual</strong> &mdash; Spatiotemporal analysis algorithms for QGIS</p>
+
+<div class="abstract" id="preface">
+  <strong>Preface.</strong> PlanX DataCube Lab is a QGIS plugin providing eight algorithms for the construction,
+  analysis, and forecasting of spatiotemporal data cubes. This manual documents the theoretical foundations,
+  mathematical formulations, parameter specifications, and interpretation guidelines for each algorithm.
+  All algorithms operate within the QGIS Processing framework and produce reproducible, citation-ready outputs.
+  The plugin is maintained as part of the PlanX ecosystem under the GPL-3.0 license.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 1: BUILD SPATIOTEMPORAL DATA CUBE
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-1" data-search="build spatiotemporal data cube create_data_cube raster fishnet netcdf zarr grid">
+  <div class="alg-head">
+    <span class="alg-id">create_data_cube</span>
+    <h2>1. Build Spatiotemporal Data Cube</h2>
+    <span class="badge badge-gold">Data Cube</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-1-theory">Theoretical Background</h3>
+    <p>
+      The spatiotemporal data cube is a conceptual and computational structure that organises geospatial
+      information along three orthogonal axes: two spatial dimensions ($X$, $Y$) and a temporal axis ($T$),
+      yielding a hypercube of observations with an optional variable dimension ($V$). The approach formalises
+      what H&auml;gerstrand (1970) termed the <em>space-time prism</em>&mdash;a bounded region in space and
+      time within which phenomena can be observed. Adopting a regular tessellation of space into a fishnet
+      (lattice) grid, the data cube imposes a common spatial reference that makes observations from
+      heterogeneous sources commensurable.
+    </p>
+    <p>
+      In GIScience, the data cube paradigm addresses a fundamental challenge: vector layers acquired at
+      different epochs rarely share a common geometry, making direct temporal comparison impossible without
+      spatial harmonisation. Rasterising each time step onto an identical grid resolves this mismatch.
+      The resulting hypercube supports array-oriented analytics (slicing, dicing, aggregation along arbitrary
+      axes) and interoperates with scientific data formats such as netCDF4 and Zarr, which are designed for
+      chunked, compressed, parallel I/O on multidimensional arrays.
+    </p>
+    <p>
+      The algorithm accepts either vector layers (rasterised by field value) or pre-existing raster stacks.
+      When multiple input layers are supplied, each is assigned to a discrete time index, producing a cube
+      of dimensionality $|X| \times |Y| \times |T| \times |V|$ where $|X|$ and $|Y|$ denote the number of
+      columns and rows of the fishnet grid, $|T|$ the number of time steps, and $|V|$ the number of
+      variables. The design follows the Earth System Data Cube specification (Mahecha et al., 2020) and
+      the Open Geospatial Consortium (OGC) Coverage Implementation Schema.
+    </p>
+
+    <h3 id="algorithm-1-math">Mathematical Formulation</h3>
+
+    <p><strong>Grid cell assignment.</strong> Given a point $(x, y)$ and a regular grid with origin
+    $(x_{\min}, y_{\min})$ and cell resolution $\Delta_g$, the column and row indices are:</p>
+    <div class="math-block">
+      $$\text{col} = \left\lfloor \frac{x - x_{\min}}{\Delta_g} \right\rfloor, \qquad
+        \text{row} = \left\lfloor \frac{y - y_{\min}}{\Delta_g} \right\rfloor \tag{1.1}$$
+    </div>
+
+    <p><strong>Fishnet polygon geometry.</strong> For cell $(c, r)$, the axis-aligned rectangle is:</p>
+    <div class="math-block">
+      $$\text{rect}\Bigl(x_0 + c\,\Delta_g,\; y_0 + r\,\Delta_g,\;
+                      x_0 + (c+1)\,\Delta_g,\; y_0 + (r+1)\,\Delta_g\Bigr) \tag{1.2}$$
+    </div>
+
+    <p><strong>Rasterisation.</strong> For vector input, each polygon is scan-converted onto the grid.
+    The value assigned to cell $(c, r)$ at time $t$ is the area-weighted mean of all polygons intersecting
+    the cell (or, at the user's choice, the modal value):</p>
+    <div class="math-block">
+      $$v_{c,r,t} = \frac{\sum_{p \in P_t} a_{p \cap (c,r)} \cdot f_p}
+                       {\sum_{p \in P_t} a_{p \cap (c,r)}} \tag{1.3}$$
+    </div>
+    <p>where $P_t$ is the set of polygons at time $t$, $a_{p \cap (c,r)}$ is the area of intersection
+    between polygon $p$ and grid cell $(c, r)$, and $f_p$ is the value field of polygon $p$.</p>
+
+    <p><strong>Cube dimensionality.</strong> The resulting data cube has the shape:</p>
+    <div class="math-block">
+      $$\dim(\mathcal{C}) = |X| \times |Y| \times |T| \times |V| \tag{1.4}$$
+    </div>
+    <p>where $|X| = \lceil (x_{\max} - x_{\min}) / \Delta_g \rceil$ and
+    $|Y| = \lceil (y_{\max} - y_{\min}) / \Delta_g \rceil$.</p>
+
+    <p><strong>netCDF4 / Zarr serialisation.</strong> The cube array $\mathbf{C} \in \mathbb{R}^{|X| \times |Y| \times |T|}$
+    is written with CF-1.8 conventions, including coordinate variables (<code>lon</code>, <code>lat</code>,
+    <code>time</code>) and grid-mapping metadata.</p>
+
+    <h3 id="algorithm-1-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_layers</code></td><td>Multi-layer (vector/raster)</td><td>Ordered list of time-stamped layers. Order determines the temporal index.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric attribute used to populate cell values for vector input. Ignored for raster input.</td></tr>
+        <tr><td><code>grid_cell_size</code></td><td>Float (CRS units)</td><td>Side length of each square grid cell. Smaller values increase spatial resolution and computational cost.</td></tr>
+        <tr><td><code>input_type</code></td><td>Enum: <code>vector</code>, <code>raster</code></td><td>Determines whether polygon rasterisation or direct raster band extraction is used.</td></tr>
+        <tr><td><code>output_netcdf</code></td><td>File path (optional)</td><td>If set, writes the cube as a CF-compliant netCDF4 file.</td></tr>
+        <tr><td><code>output_zarr</code></td><td>Directory path (optional)</td><td>If set, writes the cube as a chunked Zarr store.</td></tr>
+        <tr><td><code>output_grid</code></td><td>Polygon layer (optional)</td><td>If set, emits the fishnet geometry for the first time step as a reference layer.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-1-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Summary string.</strong> Reports the grid dimensions ($|X| \times |Y|$), number of time
+      steps $|T|$, total cells, and file paths for any exported netCDF/Zarr artefacts.</p>
+      <p><strong>Grid layer</strong> (optional). A polygon layer with columns <code>col</code>,
+      <code>row</code>, and <code>cell_id = row * ncols + col</code>. Geometry is the fishnet rectangle
+      for the first time step.</p>
+      <p><strong>netCDF4 file</strong> (optional). Contains the variable <code>cube_value</code> with
+      dimensions <code>(time, y, x)</code>, plus CF coordinate variables and global attributes
+      (<code>Conventions</code>, <code>source</code>, <code>history</code>).</p>
+      <p><strong>Zarr store</strong> (optional). Directory containing the Zarr hierarchy with
+      <code>.zarray</code> and <code>.zattrs</code> metadata. Supports concurrent reads and
+      cloud-object-store backends.</p>
+    </div>
+
+    <h3 id="algorithm-1-interp">Interpretation Guide</h3>
+    <p>
+      The grid cell size is the primary determinant of information density. Choose a cell size that is at
+      least twice the typical feature size of the input data to avoid aliasing, and no larger than the
+      coarsest acceptable analytical unit. A useful heuristic is to set $\Delta_g$ to the mean nearest-neighbour
+      distance of input features divided by two.
+    </p>
+    <p>
+      netCDF4 output is recommended for single-file portability and compatibility with Panoply, QGIS, and
+      Python's <code>xarray</code>. Zarr output is recommended for cloud-native workflows where parallel,
+      chunked reads are needed. Both formats preserve the full precision of the rasterised values; no
+      rounding or quantisation is performed unless the input type requires it.
+    </p>
+    <p>
+      The optional grid output layer is useful for inspecting which cells are populated and for linking
+      subsequent panel-format analyses back to the original grid. The <code>cell_id</code> column is the
+      join key for all downstream spatiotemporal analyses.
+    </p>
+
+    <h3 id="algorithm-1-refs">References</h3>
+    <ol class="ref-list">
+      <li>H&auml;gerstrand, T. (1970). What about people in regional science? <em>Papers of the Regional Science Association</em>, 24(1), 7&ndash;21. <a href="https://doi.org/10.1007/BF01936872" target="_blank" rel="noopener">DOI: 10.1007/BF01936872</a></li>
+      <li>Andrienko, G., Andrienko, N., &amp; Gatalsky, P. (2003). Exploratory analysis of spatial and temporal data: A systematic approach. <em>Springer Science &amp; Business Media</em>.</li>
+      <li>Mahecha, M. D., Gans, F., Brandt, G., et al. (2020). Earth system data cubes unravel global multivariate dynamics. <em>Earth System Dynamics</em>, 11(1), 201&ndash;234. <a href="https://doi.org/10.5194/esd-11-201-2020" target="_blank" rel="noopener">DOI: 10.5194/esd-11-201-2020</a></li>
+      <li>Pebesma, E. (2012). spacetime: Spatio-temporal data in R. <em>Journal of Statistical Software</em>, 51(7), 1&ndash;30. <a href="https://doi.org/10.18637/jss.v051.i07" target="_blank" rel="noopener">DOI: 10.18637/jss.v051.i07</a></li>
+      <li>Baumann, P., Hirschorn, E., &amp; Maso, J. (2017). OGC Coverage Implementation Schema. <em>Open Geospatial Consortium</em>, Document 09-146r8.</li>
+      <li>ESRI (2016). <em>ArcGIS Pro: How Create Space Time Cube Works</em>. Environmental Systems Research Institute, Redlands, CA.</li>
+      <li>Eaton, B., Gregory, J., Drach, B., et al. (2022). NetCDF Climate and Forecast (CF) Metadata Conventions, Version 1.10. <a href="https://cfconventions.org/" target="_blank" rel="noopener">cfconventions.org</a></li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 2: SPACE-TIME CUBE AGGREGATION
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-2" data-search="space time cube aggregation bin point events fishnet panel count sum mean max min">
+  <div class="alg-head">
+    <span class="alg-id">space_time_cube</span>
+    <h2>2. Space-Time Cube Aggregation</h2>
+    <span class="badge badge-gold">Data Cube</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-2-theory">Theoretical Background</h3>
+    <p>
+      Space-time aggregation transforms a collection of discrete point events into a structured panel dataset
+      by simultaneously binning observations into spatial cells and temporal intervals. This operation
+      generalises the classical quadrat-count method of spatial point-pattern analysis (Diggle, 2013) into
+      the temporal domain, producing a balanced spatiotemporal lattice that serves as the input for every
+      subsequent analytical algorithm in the plugin.
+    </p>
+    <p>
+      The aggregation step addresses two core needs. First, it converts irregularly sampled point data into a
+      regular structure amenable to array-based computation. Second, it provides a natural framework for
+      summarising event intensity within each space-time bin through user-selectable statistics
+      (count, sum, mean, maximum, minimum). The choice of aggregation mode is consequential: count
+      captures frequency of occurrence, sum captures cumulative magnitude (when a value field is supplied),
+      and the central-tendency measures capture typical magnitude per bin.
+    </p>
+    <p>
+      The output is a <em>long-format panel</em> layer where each row corresponds to a single cell-time
+      combination, identified by a composite key $(c, r, t)$. This structure is directly compatible with
+      the fixed-effects panel regression tradition in econometrics (Wooldridge, 2010) and the lattice-based
+      spatiotemporal models in climatology (Cressie &amp; Wikle, 2011). The <code>cell_id</code> column,
+      computed as $\text{row} \times n_{\text{cols}} + \text{col}$, provides a flat integer key for
+      efficient joins.
+    </p>
+
+    <h3 id="algorithm-2-math">Mathematical Formulation</h3>
+
+    <p><strong>Temporal bin assignment.</strong> For an event with timestamp $t$ and a time-step size
+    $\Delta_t$, the temporal bin index is:</p>
+    <div class="math-block">
+      $$t_{\text{bin}} = \left\lfloor \frac{t - t_{\min}}{\Delta_t} \right\rfloor \tag{2.1}$$
+    </div>
+
+    <p><strong>Spatial binning.</strong> The spatial bin is determined by the same grid-cell assignment as
+    Algorithm 1 (Equations 1.1&ndash;1.2). Each event is assigned to the unique space-time tuple
+    $(\text{col}, \text{row}, t_{\text{bin}})$.</p>
+
+    <p><strong>Aggregation statistics.</strong> For each space-time bin $b = (c, r, \tau)$, the
+    accumulated statistics are computed incrementally from the set of events $E_b$:</p>
+    <div class="math-block">
+      \begin{aligned}
+      n_b   &= |E_b| \\
+      s_b   &= \sum_{e \in E_b} v_e \\
+      \mu_b &= s_b / n_b \quad (\text{if } n_b > 0) \\
+      v_{\max,b} &= \max_{e \in E_b} v_e \\
+      v_{\min,b} &= \min_{e \in E_b} v_e
+      \end{aligned} \tag{2.2}
+    </div>
+
+    <p><strong>Panel cell identifier.</strong> The flat integer key for each spatial cell is:</p>
+    <div class="math-block">
+      $$\text{cell\_id} = r \cdot n_{\text{cols}} + c \tag{2.3}$$
+    </div>
+    <p>where $n_{\text{cols}} = |X|$ is the number of grid columns.</p>
+
+    <p><strong>Drop-empty-cell filter.</strong> When enabled, any row for which $n_b = 0$ is excluded
+    from the output. This reduces memory footprint and avoids propagating structural zeros into
+    downstream statistical tests where they could bias variance estimates.</p>
+
+    <p><strong>Long-format panel.</strong> The output matrix $\mathbf{P}$ has $N$ rows and columns
+    $[\text{cell\_id}, \text{col}, \text{row}, \text{time\_step}, \text{time\_value}, \text{value}, \text{count}]$,
+    where $N \leq |X| \cdot |Y| \cdot |T|$.</p>
+
+    <h3 id="algorithm-2-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_events</code></td><td>Point layer</td><td>Input point features with spatial coordinates and a numeric time field.</td></tr>
+        <tr><td><code>time_field</code></td><td>Numeric field</td><td>Timestamp or ordinal time value. Must be numeric (epoch seconds, year, or sequential index).</td></tr>
+        <tr><td><code>value_field</code></td><td>Numeric field (optional)</td><td>Attribute to aggregate. If omitted, only count is computed.</td></tr>
+        <tr><td><code>aggregation_mode</code></td><td>Enum: <code>count</code>, <code>sum</code>, <code>mean</code>, <code>max</code>, <code>min</code></td><td>Statistic to compute per bin. Mean is derived from internally tracked sum/count.</td></tr>
+        <tr><td><code>grid_cell_size</code></td><td>Float (CRS units)</td><td>Spatial resolution of the fishnet grid.</td></tr>
+        <tr><td><code>time_step_size</code></td><td>Float</td><td>Width of each temporal bin in the same units as <code>time_field</code>.</td></tr>
+        <tr><td><code>drop_empty</code></td><td>Boolean</td><td>If true, space-time bins with zero events are excluded from the output layer.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-2-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Panel polygon layer.</strong> The primary output. Each row is one space-time bin.
+      Fields include <code>cell_id</code> (integer, Equation 2.3), <code>col</code>, <code>row</code>,
+      <code>time_step</code> (temporal bin index), <code>time_value</code> (the mid-point or representative
+      value of the bin), <code>value</code> (the aggregated statistic), and <code>count</code>
+      (number of events in that bin).</p>
+      <p><strong>Optional netCDF export.</strong> The panel can be reshaped into a 3-D array
+      $(|X| \times |Y| \times |T|)$ and written as a netCDF4 file with CF conventions.</p>
+    </div>
+
+    <h3 id="algorithm-2-interp">Interpretation Guide</h3>
+    <p>
+      The time-step size should be large enough that typical bins contain at least 5&ndash;10 events for
+      stable statistics, yet small enough to resolve the temporal dynamics of interest. A useful diagnostic
+      is to inspect the histogram of bin counts after aggregation: a heavy left tail (many bins with 0&ndash;1
+      events) indicates that the time step is too fine or that events are spatially sparse.
+    </p>
+    <p>
+      The Modifiable Areal Unit Problem (MAUP; Openshaw, 1983) applies to both the spatial grid and the
+      temporal bin. Results should be interpreted with awareness that alternative grid resolutions or
+      temporal partitions may yield different patterns. Sensitivity analysis across a reasonable range of
+      cell sizes and time steps is recommended before drawing substantive conclusions.
+    </p>
+    <p>
+      When a <code>value_field</code> is supplied, the count field still records the number of contributing
+      events. Ratios (e.g., sum/count = mean) are arithmetic identities, so reporting only the aggregated
+      value without the count is discouraged&mdash;the count serves as a measure of reliability.
+    </p>
+
+    <h3 id="algorithm-2-refs">References</h3>
+    <ol class="ref-list">
+      <li>Peuquet, D. J. (1994). It's about time: A conceptual framework for the representation of temporal dynamics in geographic information systems. <em>Annals of the Association of American Geographers</em>, 84(3), 441&ndash;461. <a href="https://doi.org/10.1111/j.1467-8306.1994.tb01873.x" target="_blank" rel="noopener">DOI: 10.1111/j.1467-8306.1994.tb01873.x</a></li>
+      <li>Langran, G. (1992). <em>Time in Geographic Information Systems</em>. Taylor &amp; Francis, London.</li>
+      <li>Openshaw, S. (1983). The modifiable areal unit problem. <em>Concepts and Techniques in Modern Geography</em>, 38. Geo Books, Norwich.</li>
+      <li>Diggle, P. J. (2013). <em>Statistical Analysis of Spatial and Spatio-Temporal Point Patterns</em>, 3rd ed. Chapman &amp; Hall/CRC.</li>
+      <li>Cressie, N. &amp; Wikle, C. K. (2011). <em>Statistics for Spatio-Temporal Data</em>. John Wiley &amp; Sons.</li>
+      <li>Wooldridge, J. M. (2010). <em>Econometric Analysis of Cross Section and Panel Data</em>, 2nd ed. MIT Press.</li>
+      <li>Worboys, M. F. (1994). A unified model for spatial and temporal information. <em>The Computer Journal</em>, 37(1), 26&ndash;34. <a href="https://doi.org/10.1093/comjnl/37.1.26" target="_blank" rel="noopener">DOI: 10.1093/comjnl/37.1.26</a></li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 3: EMERGING HOT SPOT ANALYSIS (EHSA)
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-3" data-search="emerging hot spot analysis ehsa getis ord gi star mann kendall trend pattern spatial autocorrelation">
+  <div class="alg-head">
+    <span class="alg-id">emerging_hot_spot_analysis</span>
+    <h2>3. Emerging Hot Spot Analysis (EHSA)</h2>
+    <span class="badge badge-accent">Spatiotemporal Analysis</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-3-theory">Theoretical Background</h3>
+    <p>
+      Emerging Hot Spot Analysis (EHSA) is a two-stage procedure that combines the Getis-Ord $G_i^*$ local
+      spatial autocorrelation statistic with the nonparametric Mann-Kendall trend test to classify each
+      spatial unit into one of seventeen spatiotemporal pattern categories. The method was popularised by
+      ESRI's Space Time Pattern Mining toolbox and has been applied extensively in criminology, epidemiology,
+      and urban analytics to detect locations where event intensity is not merely high or low but evolving
+      in statistically meaningful ways over time.
+    </p>
+    <p>
+      The first stage computes $G_i^*$ independently at each time step. The $G_i^*$ statistic (Getis &amp; Ord,
+      1992; Ord &amp; Getis, 1995) identifies local clusters of high values (hot spots) and low values
+      (cold spots) by comparing the weighted local mean to the global mean, standardised by the sample
+      standard deviation. The spatial weights matrix $\mathbf{W}$ may be defined by a fixed distance band
+      (binary adjacency) or by a $K$-nearest-neighbour scheme. The second stage applies the Mann-Kendall
+      trend test (Mann, 1945; Kendall, 1975) to the time series of $G_i^*$ $z$-scores at each location,
+      detecting whether the intensity of spatial clustering is increasing, decreasing, or stable.
+    </p>
+    <p>
+      The seventeen output classes are derived from a decision tree that considers the significance pattern of
+      the $G_i^*$ $z$-scores across time, the direction and significance of the Mann-Kendall trend, the
+      presence of consecutive runs of significant hot or cold spots, and oscillation between hot and cold
+      states. This taxonomy captures nuanced dynamics such as <em>intensifying</em>, <em>diminishing</em>,
+      <em>sporadic</em>, and <em>oscillating</em> hot and cold spots, providing a richer characterisation
+      than a single cross-sectional hot-spot map.
+    </p>
+
+    <h3 id="algorithm-3-math">Mathematical Formulation</h3>
+
+    <p><strong>Getis-Ord $G_i^*$ statistic.</strong> For each time step $t$ and location $i$, let $x_{i,t}$
+    be the value and let $w_{ij}$ be the spatial weight between locations $i$ and $j$. The statistic is:</p>
+    <div class="math-block">
+      $$G_{i,t}^* = \frac{\sum_{j=1}^{n} w_{ij} x_{j,t} - \bar{X}_t \sum_{j=1}^{n} w_{ij}}
+                         {S_t \, \sqrt{\frac{n \sum_{j=1}^{n} w_{ij}^2 - (\sum_{j=1}^{n} w_{ij})^2}{n-1}}} \tag{3.1}$$
+    </div>
+    <p>where $\bar{X}_t = \frac{1}{n}\sum_{j=1}^{n} x_{j,t}$ and
+    $S_t = \sqrt{\frac{1}{n}\sum_{j=1}^{n} x_{j,t}^2 - \bar{X}_t^2}$.</p>
+
+    <p><strong>Kendall's $S$ statistic.</strong> For the time series of $G_i^*$ $z$-scores
+    $\mathbf{z}_i = (z_{i,1}, \dots, z_{i,T})$, the Mann-Kendall test statistic is:</p>
+    <div class="math-block">
+      $$S_i = \sum_{k=1}^{T-1} \sum_{l=k+1}^{T} \operatorname{sgn}(z_{i,l} - z_{i,k}) \tag{3.2}$$
+    </div>
+    <p>where $\operatorname{sgn}(\theta) = 1$ if $\theta > 0$, $-1$ if $\theta < 0$, and $0$ otherwise.</p>
+
+    <p><strong>Variance of $S$.</strong> Under the null hypothesis of no trend, the variance incorporates
+    a correction for tied values:</p>
+    <div class="math-block">
+      $$\operatorname{Var}(S_i) = \frac{T(T-1)(2T+5) - \sum_{g=1}^{m} t_g(t_g-1)(2t_g+5)}{18} \tag{3.3}$$
+    </div>
+    <p>where $m$ is the number of tied groups and $t_g$ is the size of the $g$-th tied group.</p>
+
+    <p><strong>Theil-Sen slope estimator.</strong> The trend magnitude is the median of all pairwise slopes:</p>
+    <div class="math-block">
+      $$\beta_i = \operatorname{median}\left\{ \frac{z_{i,l} - z_{i,k}}{l - k} : 1 \leq k < l \leq T \right\} \tag{3.4}$$
+    </div>
+
+    <p><strong>17-class decision tree.</strong> Each location is classified by traversing the following
+    rule hierarchy: (i) determine whether the location is ever a significant hot spot or cold spot;
+    (ii) apply the Mann-Kendall test to the $z$-score series; (iii) count consecutive significant steps
+    at the end of the series; (iv) detect oscillation if the location alternates between hot and cold
+    significance. The resulting 17 EHSA codes (0&ndash;16) map to labels: <em>No pattern detected</em>,
+    <em>New hot spot</em>, <em>Consecutive hot spot</em>, <em>Intensifying hot spot</em>,
+    <em>Persistent hot spot</em>, <em>Diminishing hot spot</em>, <em>Sporadic hot spot</em>,
+    <em>Oscillating hot spot</em>, <em>Historical hot spot</em>, and their cold-spot analogues,
+    plus the <em>New</em> (most recent step only) variants. The exact decision tree is documented in
+    ESRI (2016).</p>
+
+    <h3 id="algorithm-3-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_panel</code></td><td>Vector layer</td><td>Panel layer from Algorithm 2, with <code>cell_id</code>, time field, and value field.</td></tr>
+        <tr><td><code>location_id_field</code></td><td>Field name</td><td>Identifier that is constant across time for the same spatial unit (typically <code>cell_id</code>).</td></tr>
+        <tr><td><code>time_step_field</code></td><td>Field name</td><td>Temporal bin index or time value.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric field to analyse.</td></tr>
+        <tr><td><code>p_threshold</code></td><td>Float (0.01&ndash;0.10)</td><td>Significance threshold for $G_i^*$ and Mann-Kendall tests. Default 0.05.</td></tr>
+        <tr><td><code>spatial_relationship</code></td><td>Enum: <code>none</code>, <code>distance_band</code>, <code>knn</code></td><td>Method for constructing the spatial weights matrix $\mathbf{W}$.</td></tr>
+        <tr><td><code>distance_band</code></td><td>Float (conditional)</td><td>Distance threshold for binary spatial weights. Required if <code>distance_band</code> is selected.</td></tr>
+        <tr><td><code>k_neighbors</code></td><td>Integer (conditional)</td><td>Number of nearest neighbours. Required if <code>knn</code> is selected.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-3-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Point or polygon layer.</strong> One row per location. Fields:</p>
+      <p><code>location_id</code> &mdash; the spatial unit identifier;<br>
+      <code>ehsa_code</code> &mdash; integer 0&ndash;16 mapping to the 17-class taxonomy;<br>
+      <code>ehsa_label</code> &mdash; human-readable class label;<br>
+      <code>mk_tau</code> &mdash; Kendall's $\tau$ for the $G_i^*$ $z$-score trend;<br>
+      <code>mk_p_value</code> &mdash; $p$-value of the Mann-Kendall test;<br>
+      <code>mk_slope</code> &mdash; Theil-Sen slope of the $z$-score trend.</p>
+      <p>The output layer is automatically styled with a 17-class categorised renderer using a
+      diverging colour scheme (red for hot-spot classes, blue for cold-spot classes, grey for
+      no pattern).</p>
+    </div>
+
+    <h3 id="algorithm-3-interp">Interpretation Guide</h3>
+    <p>
+      The EHSA classification is inherently multi-dimensional, and no single class is universally
+      "concerning" or "desirable." A <em>persistent hot spot</em> indicates sustained high intensity over
+      the entire study period, which may represent chronic conditions (e.g., endemic disease areas,
+      persistent crime corridors). An <em>intensifying hot spot</em> indicates that intensity is not only
+      high but statistically increasing, warranting closer monitoring or intervention.
+    </p>
+    <p>
+      The choice of spatial relationship is critical. A distance band assumes isotropy and uniform
+      interaction range, suitable for phenomena with a known spatial range (e.g., pollutant dispersion).
+      KNN adapts to variable density but can mask true spatial structure in sparse regions. Conduct
+      sensitivity analysis across multiple distance thresholds or $K$ values to assess stability.
+    </p>
+    <p>
+      The Mann-Kendall test assumes serially independent observations. Temporal autocorrelation in the
+      $G_i^*$ $z$-scores can inflate the Type I error rate (Yue et al., 2002). When $T$ is small
+      ($T < 10$), the test has low power; when $T$ is large, consider pre-whitening or block
+      bootstrapping to control for autocorrelation.
+    </p>
+
+    <h3 id="algorithm-3-refs">References</h3>
+    <ol class="ref-list">
+      <li>Getis, A. &amp; Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. <em>Geographical Analysis</em>, 24(3), 189&ndash;206. <a href="https://doi.org/10.1111/j.1538-4632.1992.tb00261.x" target="_blank" rel="noopener">DOI: 10.1111/j.1538-4632.1992.tb00261.x</a></li>
+      <li>Ord, J. K. &amp; Getis, A. (1995). Local spatial autocorrelation statistics: Distributional issues and an application. <em>Geographical Analysis</em>, 27(4), 286&ndash;306. <a href="https://doi.org/10.1111/j.1538-4632.1995.tb00912.x" target="_blank" rel="noopener">DOI: 10.1111/j.1538-4632.1995.tb00912.x</a></li>
+      <li>Anselin, L. (1995). Local indicators of spatial association&mdash;LISA. <em>Geographical Analysis</em>, 27(2), 93&ndash;115. <a href="https://doi.org/10.1111/j.1538-4632.1995.tb00338.x" target="_blank" rel="noopener">DOI: 10.1111/j.1538-4632.1995.tb00338.x</a></li>
+      <li>Mann, H. B. (1945). Nonparametric tests against trend. <em>Econometrica</em>, 13(3), 245&ndash;259. <a href="https://doi.org/10.2307/1907187" target="_blank" rel="noopener">DOI: 10.2307/1907187</a></li>
+      <li>Kendall, M. G. (1975). <em>Rank Correlation Methods</em>, 4th ed. Charles Griffin, London.</li>
+      <li>Sen, P. K. (1968). Estimates of the regression coefficient based on Kendall's tau. <em>Journal of the American Statistical Association</em>, 63(324), 1379&ndash;1389. <a href="https://doi.org/10.1080/01621459.1968.10480934" target="_blank" rel="noopener">DOI: 10.1080/01621459.1968.10480934</a></li>
+      <li>ESRI (2016). <em>ArcGIS Pro: How Emerging Hot Spot Analysis Works</em>. Environmental Systems Research Institute, Redlands, CA.</li>
+      <li>Yue, S., Pilon, P., Phinney, B., &amp; Cavadias, G. (2002). The influence of autocorrelation on the ability to detect trend in hydrological series. <em>Hydrological Processes</em>, 16(9), 1807&ndash;1829. <a href="https://doi.org/10.1002/hyp.1095" target="_blank" rel="noopener">DOI: 10.1002/hyp.1095</a></li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 4: LOCAL OUTLIER ANALYSIS
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-4" data-search="local outlier analysis moran i lisa anselin cluster spatial outlier hh ll hl lh permutation">
+  <div class="alg-head">
+    <span class="alg-id">local_morans_i</span>
+    <h2>4. Local Outlier Analysis (Local Moran's I)</h2>
+    <span class="badge badge-accent">Spatiotemporal Analysis</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-4-theory">Theoretical Background</h3>
+    <p>
+      Local Moran's $I$, introduced by Anselin (1995) as a Local Indicator of Spatial Association (LISA),
+      decomposes the global Moran's $I$ statistic into location-specific components that identify spatial
+      clusters and spatial outliers. Where global Moran's $I$ provides a single summary of spatial
+      autocorrelation, the local variant produces a map of statistically significant clusters of high values
+      (HH), clusters of low values (LL), high-value outliers surrounded by low values (HL), and low-value
+      outliers surrounded by high values (LH). This decomposition is essential for understanding the spatial
+      heterogeneity of a phenomenon.
+    </p>
+    <p>
+      In the spatiotemporal context of DataCube Lab, the algorithm first aggregates the panel data to a
+      single value per location using a user-selected temporal reduction (mean, last observation, sum, or
+      maximum). This produces a cross-sectional dataset to which the local Moran's $I$ is applied. The
+      temporal aggregation step is not a compromise but a deliberate analytical choice: it collapses the
+      temporal dimension to reveal the <em>average spatial structure</em>, which can then be compared with
+      the trend results from Algorithm 5 and the anomaly results from Algorithm 6 to construct a
+      multi-faceted characterisation of each location.
+    </p>
+    <p>
+      Significance is assessed via a conditional permutation test (Anselin, 1995). For each location, the
+      observed value $x_i$ is held fixed while the values of the neighbours are randomly drawn (without
+      replacement) from the remaining $n-1$ observations. A pseudo $p$-value is computed as the proportion
+      of permutations in which the absolute local $I$ statistic equals or exceeds the observed value.
+      This nonparametric approach avoids distributional assumptions and is robust to non-normality.
+    </p>
+
+    <h3 id="algorithm-4-math">Mathematical Formulation</h3>
+
+    <p><strong>Local Moran's $I$.</strong> For location $i$ with deviation from the mean
+    $d_i = x_i - \bar{X}$, the local statistic is:</p>
+    <div class="math-block">
+      $$I_i = \frac{d_i}{m_0} \sum_{j=1}^{n} w_{ij} \, d_j, \qquad
+        m_0 = \frac{1}{n}\sum_{i=1}^{n} d_i^2 \tag{4.1}$$
+    </div>
+
+    <p><strong>Spatial lag.</strong> The spatially lagged deviation at location $i$ is:</p>
+    <div class="math-block">
+      $$L_i = \sum_{j=1}^{n} w_{ij} \cdot d_j \tag{4.2}$$
+    </div>
+    <p>The spatial lag is positive when neighbours tend to be above the global mean and negative when
+    they tend to be below it.</p>
+
+    <p><strong>Conditional permutation test.</strong> For $N_{\text{perm}}$ permutations at location $i$,
+    let $I_i^{(k)}$ be the statistic computed using a random draw of the neighbour set from
+    $\{x_j : j \neq i\}$. The pseudo $p$-value is:</p>
+    <div class="math-block">
+      $$p_i = \frac{\#\{k : |I_i^{(k)}| \geq |I_i^{\text{obs}}|\} + 1}{N_{\text{perm}} + 1} \tag{4.3}$$
+    </div>
+    <p>The unit increment in both numerator and denominator ensures the $p$-value is never zero
+    (a conservative adjustment; see North et al., 2002).</p>
+
+    <p><strong>$z$-score standardisation.</strong> The observed $I_i$ is converted to a $z$-score using
+    the permutation mean $\mu_{\text{perm}}$ and standard deviation $\sigma_{\text{perm}}$:</p>
+    <div class="math-block">
+      $$z_i = \frac{I_i^{\text{obs}} - \mu_{\text{perm}}}{\sigma_{\text{perm}}} \tag{4.4}$$
+    </div>
+
+    <p><strong>Quadrant classification.</strong> Each location is assigned to one of five categories
+    based on the sign of the standardised deviation $z_i = \operatorname{sign}(d_i) \cdot |z_i|$ and the
+    spatial lag:</p>
+    <div class="math-block">
+      \begin{cases}
+      \text{HH (High-High cluster)}  & \text{if } z_i > 0 \text{ and } L_i \geq 0 \\
+      \text{LL (Low-Low cluster)}    & \text{if } z_i < 0 \text{ and } L_i \leq 0 \\
+      \text{LH (Low-High outlier)}   & \text{if } z_i < 0 \text{ and } L_i > 0 \\
+      \text{HL (High-Low outlier)}   & \text{if } z_i > 0 \text{ and } L_i < 0 \\
+      \text{Not significant}         & \text{if } p_i \geq \alpha
+      \end{cases} \tag{4.5}
+    </div>
+
+    <h3 id="algorithm-4-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_panel</code></td><td>Vector layer</td><td>Panel layer from Algorithm 2.</td></tr>
+        <tr><td><code>location_id_field</code></td><td>Field name</td><td>Spatial unit identifier (typically <code>cell_id</code>).</td></tr>
+        <tr><td><code>time_field</code></td><td>Field name</td><td>Temporal index field.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric field to analyse.</td></tr>
+        <tr><td><code>temporal_aggregation</code></td><td>Enum: <code>mean</code>, <code>last</code>, <code>sum</code>, <code>max</code></td><td>Method to collapse the temporal dimension to one value per location.</td></tr>
+        <tr><td><code>spatial_relationship</code></td><td>Enum: <code>distance_band</code>, <code>knn</code></td><td>Weights matrix construction method.</td></tr>
+        <tr><td><code>distance_band</code></td><td>Float</td><td>Distance threshold for binary weights.</td></tr>
+        <tr><td><code>k_neighbors</code></td><td>Integer</td><td>Number of nearest neighbours for KNN weights.</td></tr>
+        <tr><td><code>permutations</code></td><td>Integer (0&ndash;9999)</td><td>Number of conditional permutations. Higher values increase precision of $p$-values but increase runtime. Default 999.</td></tr>
+        <tr><td><code>p_threshold</code></td><td>Float</td><td>Significance level for cluster/outlier classification.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-4-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Vector layer.</strong> One row per location. Fields:</p>
+      <p><code>location_id</code> &mdash; spatial unit identifier;<br>
+      <code>agg_value</code> &mdash; temporally aggregated value;<br>
+      <code>local_i</code> &mdash; the local Moran's $I$ statistic (Equation 4.1);<br>
+      <code>z_score</code> &mdash; standardised $z$-score (Equation 4.4);<br>
+      <code>spatial_lag</code> &mdash; spatially lagged deviation (Equation 4.2);<br>
+      <code>p_value</code> &mdash; pseudo $p$-value (Equation 4.3);<br>
+      <code>cluster_code</code> &mdash; integer 0&ndash;4 (0 = not significant, 1 = HH, 2 = LL, 3 = LH, 4 = HL);<br>
+      <code>cluster</code> &mdash; human-readable label.</p>
+      <p>A Moran scatterplot can be derived by plotting <code>agg_value</code> (standardised) against
+      <code>spatial_lag</code>. The four quadrants correspond to HH, LL, LH, and HL.</p>
+    </div>
+
+    <h3 id="algorithm-4-interp">Interpretation Guide</h3>
+    <p>
+      HH clusters indicate spatial agglomeration of high values&mdash;locations where both the unit and its
+      neighbours exhibit above-average intensity. These are conventionally interpreted as "hot spots" in
+      the LISA framework (distinct from the $G_i^*$ hot spots of Algorithm 3, which use a different
+      null hypothesis). LL clusters indicate low-value agglomerations.
+    </p>
+    <p>
+      HL outliers (high surrounded by low) are especially informative: they identify "islands" of high
+      intensity in an otherwise low-intensity region, suggesting localised anomalies that may be driven by
+      site-specific conditions rather than regional processes. LH outliers (low surrounded by high) indicate
+      under-performing locations in a generally high-intensity area. Both outlier types warrant
+      case-level investigation.
+    </p>
+    <p>
+      The permutation count should be at least 999 for publication-quality $p$-values (the minimum
+      resolvable $p$-value is $1/(N_{\text{perm}}+1)$). Set permutations to 0 to disable the test and
+      obtain only the point estimates. The temporal aggregation method affects the interpretation:
+      <code>mean</code> smooths transient fluctuations, <code>last</code> captures the most recent state,
+      and <code>sum</code> reflects cumulative magnitude over the study period.
+    </p>
+
+    <h3 id="algorithm-4-refs">References</h3>
+    <ol class="ref-list">
+      <li>Anselin, L. (1995). Local indicators of spatial association&mdash;LISA. <em>Geographical Analysis</em>, 27(2), 93&ndash;115. <a href="https://doi.org/10.1111/j.1538-4632.1995.tb00338.x" target="_blank" rel="noopener">DOI: 10.1111/j.1538-4632.1995.tb00338.x</a></li>
+      <li>Anselin, L. (2019). A local indicator of multivariate spatial association: Extending Geary's $c$. <em>Geographical Analysis</em>, 51(2), 133&ndash;150.</li>
+      <li>Cliff, A. D. &amp; Ord, J. K. (1981). <em>Spatial Processes: Models and Applications</em>. Pion, London.</li>
+      <li>North, B. V., Curtis, D., &amp; Sham, P. C. (2002). A note on the calculation of empirical $p$-values from Monte Carlo procedures. <em>American Journal of Human Genetics</em>, 71(2), 439&ndash;441. <a href="https://doi.org/10.1086/341527" target="_blank" rel="noopener">DOI: 10.1086/341527</a></li>
+      <li>Sokal, R. R., Oden, N. L., &amp; Thomson, B. A. (1998). Local spatial autocorrelation in a biological model. <em>Geographical Analysis</em>, 30(4), 331&ndash;354.</li>
+      <li>Tiefelsdorf, M. (2002). The saddlepoint approximation of Moran's $I$'s and local Moran's $I_i$'s reference distributions and their numerical evaluation. <em>Geographical Analysis</em>, 34(3), 187&ndash;206.</li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 5: TEMPORAL TREND ANALYSIS
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-5" data-search="temporal trend analysis mann kendall tau theil sen slope increasing decreasing monotonic">
+  <div class="alg-head">
+    <span class="alg-id">temporal_trend</span>
+    <h2>5. Temporal Trend Analysis</h2>
+    <span class="badge badge-accent">Spatiotemporal Analysis</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-5-theory">Theoretical Background</h3>
+    <p>
+      Temporal trend analysis addresses the simplest and most frequently asked question in spatiotemporal
+      data analysis: for each location, is the observed time series increasing, decreasing, or stable?
+      The algorithm employs the Mann-Kendall nonparametric trend test (Mann, 1945; Kendall, 1975) paired
+      with the Theil-Sen slope estimator (Theil, 1950; Sen, 1968). This combination is the de facto
+      standard for environmental monitoring, recommended by the World Meteorological Organization for
+      trend detection in hydro-climatic time series.
+    </p>
+    <p>
+      The Mann-Kendall test is a rank-based procedure that tests the null hypothesis $H_0$ of no monotonic
+      trend against the two-sided alternative $H_a$ of an increasing or decreasing monotonic trend. Its
+      nonparametric nature confers two advantages: it does not require normally distributed data, and it is
+      robust to outliers, which are common in geospatial time series (e.g., extreme weather events, sudden
+      land-use changes). The test statistic $S$ counts the number of concordant minus discordant pairs
+      across all possible pairwise comparisons.
+    </p>
+    <p>
+      The Theil-Sen slope provides a robust estimate of the trend magnitude. Unlike ordinary least squares,
+      which can be severely distorted by a single outlier, the Theil-Sen estimator is the median of all
+      pairwise slopes and has a breakdown point of approximately 29.3%, meaning that nearly 30% of the
+      data can be contaminated before the estimator becomes unreliable (Rousseeuw &amp; Leroy, 1987).
+      The Sen intercept (median of residuals) completes the trend line, making it suitable for generating
+      predicted values and visualisations.
+    </p>
+
+    <h3 id="algorithm-5-math">Mathematical Formulation</h3>
+
+    <p><strong>Kendall's $\tau$ correlation coefficient.</strong> For a time series of length $n$:</p>
+    <div class="math-block">
+      $$\tau = \frac{2S}{n(n-1)}, \qquad
+        S = \sum_{i=1}^{n-1} \sum_{j=i+1}^{n} \operatorname{sgn}(x_j - x_i) \tag{5.1}$$
+    </div>
+    <p>where $\tau \in [-1, 1]$, with $+1$ indicating perfect increasing monotonicity and $-1$ perfect
+    decreasing monotonicity.</p>
+
+    <p><strong>Standardised Mann-Kendall $Z$ statistic.</strong></p>
+    <div class="math-block">
+      $$Z = \begin{cases}
+        \dfrac{S - 1}{\sqrt{\operatorname{Var}(S)}}, & S > 0 \\[8pt]
+        \dfrac{S + 1}{\sqrt{\operatorname{Var}(S)}}, & S < 0 \\[8pt]
+        0, & S = 0
+      \end{cases} \tag{5.2}$$
+    </div>
+    <p>The continuity correction ($\pm 1$) improves the normal approximation for small $n$.</p>
+
+    <p><strong>Theil-Sen slope.</strong> The robust trend magnitude per time step:</p>
+    <div class="math-block">
+      $$\beta = \operatorname{median}\left\{ \frac{x_j - x_i}{\,j - i\,} : 1 \leq i < j \leq n \right\} \tag{5.3}$$
+    </div>
+
+    <p><strong>Sen intercept.</strong> The intercept of the trend line, estimated as:</p>
+    <div class="math-block">
+      $$\alpha = \operatorname{median}\left\{ x_t - \beta \cdot t : t = 0, \dots, n-1 \right\} \tag{5.4}$$
+    </div>
+
+    <p><strong>$p$-value via normal approximation.</strong> The two-sided $p$-value is obtained from the
+    standard normal cumulative distribution function $\Phi$:</p>
+    <div class="math-block">
+      $$p = 2 \cdot \bigl(1 - \Phi(|Z|)\bigr) \tag{5.5}$$
+    </div>
+    <p>The implementation uses the Abramowitz &amp; Stegun (1964) rational approximation for $\Phi$,
+    accurate to $7.5 \times 10^{-8}$.</p>
+
+    <h3 id="algorithm-5-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_panel</code></td><td>Vector layer</td><td>Panel layer from Algorithm 2.</td></tr>
+        <tr><td><code>location_id_field</code></td><td>Field name</td><td>Spatial unit identifier.</td></tr>
+        <tr><td><code>time_field</code></td><td>Field name</td><td>Temporal index or time value field.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric field to analyse for trend.</td></tr>
+        <tr><td><code>p_threshold</code></td><td>Float (0.01&ndash;0.10)</td><td>Significance level for classifying a trend as significant. Default 0.05.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-5-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Vector layer.</strong> One row per location. Fields:</p>
+      <p><code>location_id</code> &mdash; spatial unit identifier;<br>
+      <code>n_obs</code> &mdash; number of temporal observations for the location;<br>
+      <code>mk_tau</code> &mdash; Kendall's $\tau$ (Equation 5.1);<br>
+      <code>mk_p_value</code> &mdash; $p$-value of the Mann-Kendall test (Equation 5.5);<br>
+      <code>sen_slope</code> &mdash; Theil-Sen slope per time step (Equation 5.3);<br>
+      <code>sen_intercept</code> &mdash; Sen intercept (Equation 5.4);<br>
+      <code>trend_code</code> &mdash; integer 0, 1, or 2;<br>
+      <code>trend</code> &mdash; <em>No significant trend</em>, <em>Increasing</em>, or <em>Decreasing</em>.</p>
+      <p>The trend classification is: trend_code = 1 (Increasing) if $\tau > 0$ and $p < \alpha$;
+      trend_code = 2 (Decreasing) if $\tau < 0$ and $p < \alpha$; trend_code = 0 otherwise.</p>
+    </div>
+
+    <h3 id="algorithm-5-interp">Interpretation Guide</h3>
+    <p>
+      Kendall's $\tau$ measures the <em>strength</em> of monotonic association, not the rate of change. A
+      $\tau$ of 0.6 with a Sen slope of 0.01 indicates a highly consistent but very slow increase; a
+      $\tau$ of 0.3 with a Sen slope of 5.0 indicates a weaker consistency but a rapid magnitude of
+      change. Report both statistics. Use the Sen slope for substantive interpretation (e.g., "the value
+      increases by $\beta$ units per time step").
+    </p>
+    <p>
+      The Mann-Kendall test has low power for $n < 8$&mdash;trends may be visually apparent but fail to
+      reach significance. Conversely, for $n > 30$, even trivially small trends may achieve statistical
+      significance. Contextualise the results with the Sen slope to distinguish statistical significance
+      from practical importance.
+    </p>
+    <p>
+      Temporal autocorrelation inflates the Type I error rate (Yue et al., 2002). If the time series
+      exhibit strong lag-1 autocorrelation (common in monthly data), consider applying the
+      trend-free pre-whitening (TFPW) procedure before analysis. The algorithm reports the raw
+      (unadjusted) $p$-value; users working with serially correlated data should note this caveat.
+    </p>
+
+    <h3 id="algorithm-5-refs">References</h3>
+    <ol class="ref-list">
+      <li>Mann, H. B. (1945). Nonparametric tests against trend. <em>Econometrica</em>, 13(3), 245&ndash;259. <a href="https://doi.org/10.2307/1907187" target="_blank" rel="noopener">DOI: 10.2307/1907187</a></li>
+      <li>Kendall, M. G. (1975). <em>Rank Correlation Methods</em>, 4th ed. Charles Griffin, London.</li>
+      <li>Sen, P. K. (1968). Estimates of the regression coefficient based on Kendall's tau. <em>Journal of the American Statistical Association</em>, 63(324), 1379&ndash;1389. <a href="https://doi.org/10.1080/01621459.1968.10480934" target="_blank" rel="noopener">DOI: 10.1080/01621459.1968.10480934</a></li>
+      <li>Theil, H. (1950). A rank-invariant method of linear and polynomial regression analysis, I, II, III. <em>Proceedings of the Koninklijke Nederlandse Akademie van Wetenschappen</em>, 53, 386&ndash;392, 521&ndash;525, 1397&ndash;1412.</li>
+      <li>Yue, S., Pilon, P., Phinney, B., &amp; Cavadias, G. (2002). The influence of autocorrelation on the ability to detect trend in hydrological series. <em>Hydrological Processes</em>, 16(9), 1807&ndash;1829. <a href="https://doi.org/10.1002/hyp.1095" target="_blank" rel="noopener">DOI: 10.1002/hyp.1095</a></li>
+      <li>Abramowitz, M. &amp; Stegun, I. A. (1964). <em>Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables</em>. National Bureau of Standards, Washington, DC.</li>
+      <li>Rousseeuw, P. J. &amp; Leroy, A. M. (1987). <em>Robust Regression and Outlier Detection</em>. John Wiley &amp; Sons, New York.</li>
+      <li>Helsel, D. R. &amp; Hirsch, R. M. (2002). <em>Statistical Methods in Water Resources</em>. Techniques of Water-Resources Investigations, Book 4, Chapter A3. U.S. Geological Survey.</li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 6: TEMPORAL ANOMALY DETECTION
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-6" data-search="temporal anomaly detection robust z score median mad standard outlier deviation modified">
+  <div class="alg-head">
+    <span class="alg-id">temporal_anomaly</span>
+    <h2>6. Temporal Anomaly Detection</h2>
+    <span class="badge badge-accent">Spatiotemporal Analysis</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-6-theory">Theoretical Background</h3>
+    <p>
+      Anomaly detection in spatiotemporal data identifies individual time points at each location that
+      deviate markedly from the location's typical behaviour. Unlike trend analysis, which characterises
+      the overall direction of change, anomaly detection pinpoints <em>when</em> unusual values occurred,
+      making it valuable for event detection (e.g., disease outbreaks, traffic incidents, ecological
+      disturbances) and data-quality screening (identifying sensor malfunctions or recording errors).
+    </p>
+    <p>
+      The algorithm offers two complementary approaches. The <em>robust modified $z$-score</em>, based on
+      the median and Median Absolute Deviation (MAD), is recommended for most geospatial applications
+      because the median and MAD have breakdown points of 50%, rendering them immune to the influence
+      of up to half the data being anomalous (Iglewicz &amp; Hoaglin, 1993). The scaling factor
+      $0.6745$ calibrates the MAD so that the robust $z$-scores are comparable to standard $z$-scores
+      for normally distributed data. The <em>standard $z$-score</em> ($z = (x - \mu)/\sigma$) is also
+      available for users who prefer a parametric approach, but it should be used with caution because
+      both the mean and standard deviation are themselves distorted by the anomalies they aim to detect
+      (Leys et al., 2013; Hampel, 1974).
+    </p>
+    <p>
+      The output is a per-location summary that includes the number and rate of anomalies, the maximum
+      absolute $z$-score, the $z$-score of the last observation (useful for real-time monitoring), and
+      the timestamps of the first and last detected anomalies. The <code>last_anomaly</code> flag
+      (0/1) answers the operational question: "Is the most recent observation anomalous?"
+    </p>
+
+    <h3 id="algorithm-6-math">Mathematical Formulation</h3>
+
+    <p><strong>Robust modified $z$-score.</strong> For location $i$ with observations
+    $\mathbf{x}_i = (x_{i,1}, \dots, x_{i,n})$:</p>
+    <div class="math-block">
+      $$\tilde{x}_i = \operatorname{median}(\mathbf{x}_i), \qquad
+        \operatorname{MAD}_i = \operatorname{median}\bigl\{ |x_{i,t} - \tilde{x}_i| : t = 1,\dots,n \bigr\}$$
+      $$z_{i,t}^{\text{(robust)}} = 0.6745 \cdot \frac{x_{i,t} - \tilde{x}_i}{\operatorname{MAD}_i} \tag{6.1}$$
+    </div>
+    <p>The constant $0.6745 = \Phi^{-1}(0.75)$ is the 75th percentile of the standard normal
+    distribution, chosen so that $\operatorname{E}[0.6745 \cdot \operatorname{MAD}] = \sigma$ when
+    $X \sim \mathcal{N}(\mu, \sigma^2)$.</p>
+
+    <p><strong>Standard $z$-score.</strong> The parametric alternative:</p>
+    <div class="math-block">
+      $$z_{i,t}^{\text{(standard)}} = \frac{x_{i,t} - \mu_i}{\sigma_i}, \qquad
+        \mu_i = \frac{1}{n}\sum_{t=1}^{n} x_{i,t}, \quad
+        \sigma_i = \sqrt{\frac{1}{n}\sum_{t=1}^{n} (x_{i,t} - \mu_i)^2} \tag{6.2}$$
+    </div>
+
+    <p><strong>Anomaly flag.</strong> An observation is flagged as anomalous if its absolute $z$-score
+    exceeds a user-defined threshold $\theta$:</p>
+    <div class="math-block">
+      $$\text{anomaly}_{i,t} = \mathbf{1}\bigl[\,|z_{i,t}| \geq \theta\,\bigr] \tag{6.3}$$
+    </div>
+    <p>Recommended thresholds are $\theta = 3.5$ for the robust $z$-score (Iglewicz &amp; Hoaglin, 1993)
+    and $\theta = 2.0$ or $2.5$ for the standard $z$-score.</p>
+
+    <p><strong>Anomaly rate.</strong> The proportion of anomalous time points at location $i$:</p>
+    <div class="math-block">
+      $$r_i^{\text{(anom)}} = \frac{1}{n} \sum_{t=1}^{n} \text{anomaly}_{i,t} \tag{6.4}$$
+    </div>
+
+    <p><strong>First and last anomaly time.</strong> If anomalies exist at location $i$, then
+    $t_{\text{first}} = \min\{t : \text{anomaly}_{i,t} = 1\}$ and
+    $t_{\text{last}} = \max\{t : \text{anomaly}_{i,t} = 1\}$.</p>
+
+    <h3 id="algorithm-6-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_panel</code></td><td>Vector layer</td><td>Panel layer from Algorithm 2.</td></tr>
+        <tr><td><code>location_id_field</code></td><td>Field name</td><td>Spatial unit identifier.</td></tr>
+        <tr><td><code>time_field</code></td><td>Field name</td><td>Temporal index field.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric field to scan for anomalies.</td></tr>
+        <tr><td><code>detection_method</code></td><td>Enum: <code>robust</code>, <code>standard</code></td><td>Robust modified $z$-score (median/MAD) or standard $z$-score (mean/sd).</td></tr>
+        <tr><td><code>anomaly_threshold</code></td><td>Float (0.5&ndash;10.0)</td><td>Minimum absolute $z$-score to flag an anomaly. Typical: 3.5 for robust, 2.0&ndash;2.5 for standard.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-6-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Vector layer.</strong> One row per location. Fields:</p>
+      <p><code>location_id</code> &mdash; spatial unit identifier;<br>
+      <code>n_obs</code> &mdash; number of temporal observations;<br>
+      <code>n_anomalies</code> &mdash; count of time points where $|z_{i,t}| \geq \theta$;<br>
+      <code>anomaly_rate</code> &mdash; $n_{\text{anomalies}} / n_{\text{obs}}$ (Equation 6.4);<br>
+      <code>max_abs_z</code> &mdash; $\max_t |z_{i,t}|$, the most extreme deviation;<br>
+      <code>last_z</code> &mdash; $z$-score of the most recent observation;<br>
+      <code>last_anomaly</code> &mdash; 1 if the most recent observation is anomalous, 0 otherwise;<br>
+      <code>first_anom_time</code> &mdash; time step of the first detected anomaly (null if none);<br>
+      <code>last_anom_time</code> &mdash; time step of the last detected anomaly (null if none).</p>
+    </div>
+
+    <h3 id="algorithm-6-interp">Interpretation Guide</h3>
+    <p>
+      A high anomaly rate (say, $r > 0.15$) does not necessarily indicate a problematic location; it may
+      reflect a genuinely volatile process or a time series that is poorly modelled by a constant central
+      tendency. Conversely, a location with only one anomaly but a very high <code>max_abs_z</code>
+      deserves scrutiny&mdash;it may represent a one-off extreme event or a data-entry error.
+    </p>
+    <p>
+      The <code>last_anomaly</code> flag is designed for operational monitoring workflows: run the
+      algorithm on updated data, filter for <code>last_anomaly = 1</code>, and dispatch field verification
+      or mitigation measures to those locations. The <code>last_z</code> field provides the signed
+      magnitude (positive for anomalously high, negative for anomalously low).
+    </p>
+    <p>
+      When using the robust method, be aware that the MAD can be exactly zero if more than half the
+      observations share the same value (common in count data with many zeros). In this case, the
+      algorithm falls back to the standard $z$-score with a warning in the log. The standard method is
+      appropriate only when the underlying distribution is approximately symmetric and uncontaminated;
+      if in doubt, use the robust method.
+    </p>
+
+    <h3 id="algorithm-6-refs">References</h3>
+    <ol class="ref-list">
+      <li>Iglewicz, B. &amp; Hoaglin, D. C. (1993). <em>How to Detect and Handle Outliers</em>. ASQC Quality Press, Milwaukee, WI.</li>
+      <li>Hampel, F. R. (1974). The influence curve and its role in robust estimation. <em>Journal of the American Statistical Association</em>, 69(346), 383&ndash;393. <a href="https://doi.org/10.1080/01621459.1974.10482962" target="_blank" rel="noopener">DOI: 10.1080/01621459.1974.10482962</a></li>
+      <li>Leys, C., Ley, C., Klein, O., Bernard, P., &amp; Licata, L. (2013). Detecting outliers: Do not use standard deviation around the mean, use absolute deviation around the median. <em>Journal of Experimental Social Psychology</em>, 49(4), 764&ndash;766. <a href="https://doi.org/10.1016/j.jesp.2013.03.013" target="_blank" rel="noopener">DOI: 10.1016/j.jesp.2013.03.013</a></li>
+      <li>Rousseeuw, P. J. &amp; Croux, C. (1993). Alternatives to the median absolute deviation. <em>Journal of the American Statistical Association</em>, 88(424), 1273&ndash;1283. <a href="https://doi.org/10.1080/01621459.1993.10476408" target="_blank" rel="noopener">DOI: 10.1080/01621459.1993.10476408</a></li>
+      <li>Hawkins, D. M. (1980). <em>Identification of Outliers</em>. Chapman &amp; Hall, London.</li>
+      <li>Barnett, V. &amp; Lewis, T. (1994). <em>Outliers in Statistical Data</em>, 3rd ed. John Wiley &amp; Sons.</li>
+      <li>Chandola, V., Banerjee, A., &amp; Kumar, V. (2009). Anomaly detection: A survey. <em>ACM Computing Surveys</em>, 41(3), Article 15. <a href="https://doi.org/10.1145/1541880.1541882" target="_blank" rel="noopener">DOI: 10.1145/1541880.1541882</a></li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 7: FORECAST BACKTEST
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-7" data-search="forecast backtest hold out cross validation exponential smoothing arima random forest rmse mae mape model selection">
+  <div class="alg-head">
+    <span class="alg-id">forecast_backtest</span>
+    <h2>7. Forecast Backtest</h2>
+    <span class="badge badge-accent">Spatiotemporal Analysis</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-7-theory">Theoretical Background</h3>
+    <p>
+      Forecast backtesting (also known as time-series cross-validation with a fixed-origin hold-out) is the
+      gold-standard procedure for selecting the most appropriate forecasting model for a given time series.
+      Rather than committing to a single model class a priori, the algorithm fits three structurally
+      distinct models&mdash;Exponential Smoothing (ETS), ARIMA, and Random Forest (RF)&mdash;on a training
+      portion of each location's time series and evaluates their predictive accuracy on a held-out test set.
+      This empirical approach operationalises the principle that "the data choose the model," which is
+      especially valuable in spatial contexts where the optimal model class may vary across locations due
+      to heterogeneous data-generating processes.
+    </p>
+    <p>
+      The three model classes represent different structural assumptions. Exponential Smoothing (Hyndman
+      &amp; Athanasopoulos, 2018) captures locally adaptive level via an exponentially weighted moving
+      average; it is parsimonious, interpretable, and often performs well for short, noisy series. ARIMA
+      (Box &amp; Jenkins, 1970) models the autocorrelation structure through autoregressive and moving-average
+      terms after optional differencing, making it suitable for series with persistent memory. Random Forest
+      (Breiman, 2001) constructs an ensemble of regression trees on lagged features, capturing nonlinear
+      interactions and threshold effects that linear models miss, but at the cost of greater data hunger and
+      reduced interpretability.
+    </p>
+    <p>
+      Model selection is based on Root Mean Squared Error (RMSE) on the test set, with Mean Absolute Error
+      (MAE) and Mean Absolute Percentage Error (MAPE) reported as supplementary diagnostics. RMSE penalises
+      large errors quadratically, making it sensitive to outlier forecasts, while MAE provides a
+      scale-dependent measure in the original units. MAPE expresses error as a percentage of the observed
+      value, facilitating comparison across locations with different scales, but is undefined when any
+      observed value is zero. The hold-out length is user-specified, typically 10&ndash;30% of the series
+      length, balancing the need for a reliable training fit against a meaningful out-of-sample evaluation.
+    </p>
+
+    <h3 id="algorithm-7-math">Mathematical Formulation</h3>
+
+    <p><strong>Exponential Smoothing (simple).</strong> The one-step-ahead forecast at time $t+1$ given
+    observations up to time $t$ is the exponentially weighted moving average:</p>
+    <div class="math-block">
+      $$F_{t+1} = \alpha \cdot x_t + (1 - \alpha) \cdot F_t \tag{7.1}$$
+    </div>
+    <p>The smoothing parameter $\alpha \in (0, 1)$ is estimated by minimising the sum of squared
+    one-step-ahead forecast errors on the training set. The forecast for all $h$ steps ahead is held
+    constant at the last fitted level: $\hat{x}_{T+h} = F_{T+1}$.</p>
+
+    <p><strong>ARIMA model.</strong> The ARIMA$(p, d, q)$ model is:</p>
+    <div class="math-block">
+      $$\phi(B) (1 - B)^d x_t = \theta(B) \varepsilon_t \tag{7.2}$$
+    </div>
+    <p>where $B$ is the backshift operator ($B x_t = x_{t-1}$), $\phi(B) = 1 - \phi_1 B - \cdots - \phi_p B^p$
+    is the autoregressive polynomial, $\theta(B) = 1 + \theta_1 B + \cdots + \theta_q B^q$ is the
+    moving-average polynomial, $d$ is the order of differencing, and $\varepsilon_t \sim \text{WN}(0, \sigma^2)$
+    is white noise. For backtesting, a fixed ARIMA(1,0,1) order is used for computational tractability
+    across potentially thousands of locations.</p>
+
+    <p><strong>Random Forest recursive forecast.</strong> A feature matrix is constructed from lagged
+    values of the training series using a sliding window of length $w$. For each window position $p$
+    from $w$ to $T_{\text{train}}$:</p>
+    <div class="math-block">
+      \begin{aligned}
+      \mathbf{X}_p &= [x_{p-w},\; x_{p-w+1},\; \dots,\; x_{p-1}] \\
+      y_p &= x_p
+      \end{aligned} \tag{7.3}
+    </div>
+    <p>An ensemble of $B$ regression trees is trained on $\{(\mathbf{X}_p, y_p)\}$. Forecasts are
+    generated recursively: $\hat{x}_{t+1} = f_{\text{RF}}([x_{t-w+1}, \dots, x_t])$, and this predicted
+    value is fed back into the window for subsequent steps.</p>
+
+    <p><strong>Forecast accuracy metrics.</strong> Let $h$ be the hold-out length and
+    $y_t, \hat{y}_t$ the observed and predicted values for $t = 1, \dots, h$:</p>
+    <div class="math-block">
+      \begin{aligned}
+      \text{MAE}  &= \frac{1}{h} \sum_{t=1}^{h} |y_t - \hat{y}_t| \\
+      \text{RMSE} &= \sqrt{\frac{1}{h} \sum_{t=1}^{h} (y_t - \hat{y}_t)^2} \\
+      \text{MAPE} &= \frac{100}{h} \sum_{t=1}^{h} \left| \frac{y_t - \hat{y}_t}{y_t} \right|
+      \end{aligned} \tag{7.4}
+    </div>
+    <p>MAPE is computed only over $t$ for which $y_t \neq 0$; if all $y_t = 0$, MAPE is reported as
+    <code>null</code>.</p>
+
+    <p><strong>Best method selection.</strong> For location $i$, the method with the lowest RMSE is
+    selected:</p>
+    <div class="math-block">
+      $$m_i^* = \operatorname{argmin}_{m \in \{\text{ETS}, \text{ARIMA}, \text{RF}\}} \text{RMSE}_{i,m} \tag{7.5}$$
+    </div>
+
+    <h3 id="algorithm-7-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_panel</code></td><td>Vector layer</td><td>Panel layer from Algorithm 2.</td></tr>
+        <tr><td><code>location_id_field</code></td><td>Field name</td><td>Spatial unit identifier.</td></tr>
+        <tr><td><code>time_field</code></td><td>Field name</td><td>Temporal index field.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric field to forecast.</td></tr>
+        <tr><td><code>holdout_length</code></td><td>Integer (1&ndash;50)</td><td>Number of time steps to hold out for testing. Must be less than $n_{\text{obs}} - 3$ for the location.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-7-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Vector layer.</strong> One row per location. Fields:</p>
+      <p><code>location_id</code> &mdash; spatial unit identifier;<br>
+      <code>n_obs</code> &mdash; total number of temporal observations;<br>
+      <code>n_test</code> &mdash; number of observations in the test set (equals <code>holdout_length</code>);<br>
+      <code>best_method</code> &mdash; the forecasting method with the lowest RMSE (ETS, ARIMA, or RF);<br>
+      <code>best_rmse</code> &mdash; RMSE of the best method;<br>
+      <code>best_mae</code> &mdash; MAE of the best method;<br>
+      <code>best_mape</code> &mdash; MAPE of the best method (may be null);<br>
+      <code>rmse_ets</code>, <code>rmse_arima</code>, <code>rmse_rf</code> &mdash; RMSE for each method;<br>
+      <code>mae_ets</code>, <code>mae_arima</code>, <code>mae_rf</code> &mdash; MAE for each method;<br>
+      <code>mape_ets</code>, <code>mape_arima</code>, <code>mape_rf</code> &mdash; MAPE for each method.</p>
+    </div>
+
+    <h3 id="algorithm-7-interp">Interpretation Guide</h3>
+    <p>
+      The <code>best_method</code> field indicates which model class the data support for each location.
+      A heterogeneous map (different methods dominating in different regions) suggests spatially varying
+      data-generating processes and justifies the backtesting approach over a one-size-fits-all model.
+      If one method dominates uniformly, that method may be preferred for forecasting (Algorithm 8) with
+      stronger theoretical grounding.
+    </p>
+    <p>
+      RMSE values should be interpreted relative to the scale of the data. A useful normalisation is
+      $\text{RMSE} / \sigma_{\text{train}}$, where values below 0.5 indicate good predictive performance
+      and values above 1.0 indicate that the model is worse than simply predicting the training mean.
+      MAPE below 10% is generally considered excellent, 10&ndash;20% good, and above 50% poor
+      (Lewis, 1982).
+    </p>
+    <p>
+      Locations with very few observations ($n_{\text{obs}} < 10$) should be interpreted cautiously.
+      ARIMA and RF both require a minimum training length; if this condition is not met, the method is
+      skipped and its error columns are populated with <code>null</code>. The best method is then
+      selected from the remaining candidates.
+    </p>
+
+    <h3 id="algorithm-7-refs">References</h3>
+    <ol class="ref-list">
+      <li>Box, G. E. P. &amp; Jenkins, G. M. (1970). <em>Time Series Analysis: Forecasting and Control</em>. Holden-Day, San Francisco.</li>
+      <li>Breiman, L. (2001). Random forests. <em>Machine Learning</em>, 45(1), 5&ndash;32. <a href="https://doi.org/10.1023/A:1010933404324" target="_blank" rel="noopener">DOI: 10.1023/A:1010933404324</a></li>
+      <li>Hyndman, R. J. &amp; Athanasopoulos, G. (2018). <em>Forecasting: Principles and Practice</em>, 2nd ed. OTexts, Melbourne. <a href="https://otexts.com/fpp2/" target="_blank" rel="noopener">otexts.com/fpp2</a></li>
+      <li>Makridakis, S., Andersen, A., Carbone, R., et al. (1982). The accuracy of extrapolation (time series) methods: Results of a forecasting competition. <em>Journal of Forecasting</em>, 1(2), 111&ndash;153. <a href="https://doi.org/10.1002/for.3980010202" target="_blank" rel="noopener">DOI: 10.1002/for.3980010202</a></li>
+      <li>Lewis, C. D. (1982). <em>Industrial and Business Forecasting Methods</em>. Butterworth Scientific, London.</li>
+      <li>Bergmeir, C. &amp; Benitez, J. M. (2012). On the use of cross-validation for time series predictor evaluation. <em>Information Sciences</em>, 191, 192&ndash;213. <a href="https://doi.org/10.1016/j.ins.2011.12.028" target="_blank" rel="noopener">DOI: 10.1016/j.ins.2011.12.028</a></li>
+      <li>Tashman, L. J. (2000). Out-of-sample tests of forecasting accuracy: An analysis and review. <em>International Journal of Forecasting</em>, 16(4), 437&ndash;450. <a href="https://doi.org/10.1016/S0169-2070(00)00065-0" target="_blank" rel="noopener">DOI: 10.1016/S0169-2070(00)00065-0</a></li>
+      <li>Armstrong, J. S. (2001). <em>Principles of Forecasting: A Handbook for Researchers and Practitioners</em>. Springer, New York.</li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ALGORITHM 8: TIME-SERIES FORECAST
+     ══════════════════════════════════════════════════════════ -->
+
+<section class="alg-card" id="algorithm-8" data-search="time series forecast future prediction arima random forest exponential smoothing recursive auto">
+  <div class="alg-head">
+    <span class="alg-id">time_series_forecast</span>
+    <h2>8. Time-Series Forecast</h2>
+    <span class="badge badge-accent">Spatiotemporal Analysis</span>
+  </div>
+  <div class="alg-body">
+
+    <h3 id="algorithm-8-theory">Theoretical Background</h3>
+    <p>
+      Time-series forecasting extends the analytical pipeline from description to prediction by producing
+      future values for each spatial location. This algorithm serves as the operational counterpart to
+      Algorithm 7 (Forecast Backtest): where the backtest evaluates <em>which modelling approach best
+      fits the historical data</em>, the forecast algorithm uses that knowledge (or an automatic
+      selection heuristic) to produce actual out-of-sample predictions. Together, they provide a
+      complete model-selection-and-deployment workflow that is rarely available in GIS software outside
+      of specialised statistical environments.
+    </p>
+    <p>
+      The <code>auto</code> method implements a pragmatic model hierarchy tailored to short and noisy
+      geospatial time series: ARIMA is preferred when the series is sufficiently long ($n \geq 8$),
+      Random Forest when the series is at least $\text{lookback} + 5$ points long, and Exponential
+      Smoothing as a fallback for the shortest series. This hierarchy reflects the principle that
+      more complex models should be used only when the data volume supports reliable estimation. The
+      lookback window for Random Forest is set to $\min(5, \lfloor n/3 \rfloor)$, balancing feature
+      richness against training-data availability.
+    </p>
+    <p>
+      All three methods generate multi-step-ahead forecasts. Exponential Smoothing produces a constant
+      forecast equal to the last fitted level. ARIMA forecasts recursively through the differencing
+      equation and the estimated ARMA coefficients. Random Forest generates recursive forecasts by
+      sliding a fixed-length window, where each predicted value becomes an input for the next step.
+      This recursive strategy, while propagating errors forward, is the standard approach when
+      exogenous predictors are unavailable.
+    </p>
+
+    <h3 id="algorithm-8-math">Mathematical Formulation</h3>
+
+    <p><strong>ARIMA(p,d,q) forecast.</strong> Given the estimated model on the full series, the
+    $h$-step-ahead forecast is obtained by iterating the ARIMA equation forward, setting future
+    errors $\varepsilon_{T+k}$ to their expectation (zero) for $k > 0$:</p>
+    <div class="math-block">
+      $$\hat{x}_{T+h} = \phi_1 \hat{x}_{T+h-1} + \cdots + \phi_{p+d} \hat{x}_{T+h-p-d}
+        + \theta_1 \hat{\varepsilon}_{T+h-1} + \cdots + \theta_q \hat{\varepsilon}_{T+h-q} \tag{8.1}$$
+    </div>
+    <p>where $\hat{x}_{T+k} = x_{T+k}$ for $k \leq 0$ (observed values) and
+    $\hat{\varepsilon}_{T+k} = 0$ for $k > 0$, while $\hat{\varepsilon}_{T+k}$ for $k \leq 0$ are
+    the model residuals. Differencing is inverted after ARMA forecasting to return to the original
+    scale.</p>
+
+    <p><strong>Random Forest recursive forecast.</strong> With a window size $w$ and a trained
+    Random Forest model $f_{\text{RF}}$, the $h$-step-ahead forecast is computed recursively:</p>
+    <div class="math-block">
+      \begin{aligned}
+      \hat{x}_{T+1} &= f_{\text{RF}}\bigl([x_{T-w+1}, \dots, x_T]\bigr) \\
+      \hat{x}_{T+2} &= f_{\text{RF}}\bigl([x_{T-w+2}, \dots, x_T, \hat{x}_{T+1}]\bigr) \\
+      &\;\;\vdots \\
+      \hat{x}_{T+h} &= f_{\text{RF}}\bigl([\underbrace{\hat{x}_{T+h-w}, \dots, \hat{x}_{T+h-1}}_{w \text{ values}}]\bigr)
+      \end{aligned} \tag{8.2}
+    </div>
+
+    <p><strong>Exponential Smoothing forecast.</strong> The forecast is constant at the last
+    smoothed level:</p>
+    <div class="math-block">
+      $$\hat{x}_{T+h} = F_{T+1} = \alpha x_T + (1-\alpha) F_T \quad \text{for all } h \geq 1 \tag{8.3}$$
+    </div>
+
+    <p><strong>Auto method selection hierarchy.</strong> For a location with $n$ observations:</p>
+    <div class="math-block">
+      \text{Method} = \begin{cases}
+        \text{ARIMA}(1,0,1),            & \text{if } n \geq 8 \\
+        \text{Random Forest},           & \text{if } n \geq w + 5 \\
+        \text{Exponential Smoothing},   & \text{otherwise}
+      \end{cases} \tag{8.4}
+    </div>
+    <p>where $w = \min(5, \lfloor n/3 \rfloor)$ is the lookback window size for Random Forest.</p>
+
+    <p><strong>Forecast columns.</strong> The output includes $h$ forecast columns. For step
+    $k \in \{1, \dots, h\}$, the value is $\hat{x}_{T+k}$ computed by the selected method.
+    The method used is recorded in the <code>forecast_method</code> field.</p>
+
+    <h3 id="algorithm-8-params">Parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>input_panel</code></td><td>Vector layer</td><td>Panel layer from Algorithm 2.</td></tr>
+        <tr><td><code>location_id_field</code></td><td>Field name</td><td>Spatial unit identifier.</td></tr>
+        <tr><td><code>time_field</code></td><td>Field name</td><td>Temporal index field.</td></tr>
+        <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric field to forecast forward.</td></tr>
+        <tr><td><code>forecast_steps</code></td><td>Integer (1&ndash;50)</td><td>Number of future time steps to predict.</td></tr>
+        <tr><td><code>method</code></td><td>Enum: <code>auto</code>, <code>ARIMA</code>, <code>RF</code>, <code>Exponential</code></td><td>Forecasting method. <code>auto</code> selects per location using the hierarchy in Equation 8.4. Explicit selection applies a single method to all locations.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="algorithm-8-output">Output Description</h3>
+    <div class="output-block">
+      <p><strong>Vector layer.</strong> One row per location. Fields:</p>
+      <p><code>location_id</code> &mdash; spatial unit identifier;<br>
+      <code>forecast_t1</code>, <code>forecast_t2</code>, &hellip;, <code>forecast_tN</code> &mdash;
+      predicted values for steps 1 through $N$ (where $N$ = <code>forecast_steps</code>);<br>
+      <code>forecast_method</code> &mdash; the method used to generate the forecasts
+      (<code>ARIMA</code>, <code>RF</code>, or <code>Exponential</code>). For <code>auto</code>
+      mode, this varies by location.</p>
+      <p>Note: this layer does not contain geometry unless joined back to the original grid layer.
+      Use <code>cell_id</code> or <code>location_id</code> as the join key with the output of
+      Algorithm 1 or 2.</p>
+    </div>
+
+    <h3 id="algorithm-8-interp">Interpretation Guide</h3>
+    <p>
+      Forecast values should always be reported with an indication of uncertainty. Since this algorithm
+      produces point forecasts only, users are strongly encouraged to consult the backtest results
+      (Algorithm 7) for the corresponding RMSE at each location as a proxy for forecast uncertainty.
+      A location with a low backtest RMSE and ARIMA as the best method is a strong candidate for
+      reliable forecasting; a location with a high RMSE and Exponential Smoothing as the best method
+      should be interpreted as having inherently unpredictable dynamics.
+    </p>
+    <p>
+      Multi-step forecasts beyond 5&ndash;10 steps should be treated with increasing caution. The
+      recursive forecasting strategy feeds prediction errors forward, so the forecast variance grows
+      with the horizon. As a rule of thumb, forecast up to $h \leq n/3$ steps ahead, where $n$ is the
+      length of the historical series. Beyond this, the forecast is dominated by model drift rather
+      than data signal.
+    </p>
+    <p>
+      When the <code>auto</code> method is used, inspect the <code>forecast_method</code> field to
+      understand which model was selected at each location. If the backtest (Algorithm 7) identified a
+      different best method for some locations, consider running this algorithm with the explicit method
+      indicated by the backtest results rather than relying on the heuristic hierarchy.
+    </p>
+
+    <h3 id="algorithm-8-refs">References</h3>
+    <ol class="ref-list">
+      <li>Box, G. E. P. &amp; Jenkins, G. M. (1970). <em>Time Series Analysis: Forecasting and Control</em>. Holden-Day, San Francisco.</li>
+      <li>Breiman, L. (2001). Random forests. <em>Machine Learning</em>, 45(1), 5&ndash;32. <a href="https://doi.org/10.1023/A:1010933404324" target="_blank" rel="noopener">DOI: 10.1023/A:1010933404324</a></li>
+      <li>Hyndman, R. J. &amp; Athanasopoulos, G. (2018). <em>Forecasting: Principles and Practice</em>, 2nd ed. OTexts, Melbourne. <a href="https://otexts.com/fpp2/" target="_blank" rel="noopener">otexts.com/fpp2</a></li>
+      <li>Hyndman, R. J. &amp; Khandakar, Y. (2008). Automatic time series forecasting: The forecast package for R. <em>Journal of Statistical Software</em>, 27(3), 1&ndash;22. <a href="https://doi.org/10.18637/jss.v027.i03" target="_blank" rel="noopener">DOI: 10.18637/jss.v027.i03</a></li>
+      <li>Brockwell, P. J. &amp; Davis, R. A. (2002). <em>Introduction to Time Series and Forecasting</em>, 2nd ed. Springer, New York.</li>
+      <li>Makridakis, S., Spiliotis, E., &amp; Assimakopoulos, V. (2018). Statistical and machine learning forecasting methods: Concerns and ways forward. <em>PLoS ONE</em>, 13(3), e0194889. <a href="https://doi.org/10.1371/journal.pone.0194889" target="_blank" rel="noopener">DOI: 10.1371/journal.pone.0194889</a></li>
+      <li>Chatfield, C. (2000). <em>Time-Series Forecasting</em>. Chapman &amp; Hall/CRC, Boca Raton.</li>
+      <li>Shumway, R. H. &amp; Stoffer, D. S. (2017). <em>Time Series Analysis and Its Applications: With R Examples</em>, 4th ed. Springer. <a href="https://doi.org/10.1007/978-3-319-52452-8" target="_blank" rel="noopener">DOI: 10.1007/978-3-319-52452-8</a></li>
+    </ol>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+</main>
+</div>
+
+<footer>
+  PlanX DataCube Lab Academic Reference Manual &mdash; maintained by Yusuf Emino&#287;lu.
+  Licensed under GPL-3.0. DOI references current as of August 2026.
+</footer>
+
+<script>
+/* ── Active sidebar link tracking ────────────────────────── */
+(function() {
+  var sidebar = document.getElementById('sidebar');
+  var links = sidebar.querySelectorAll('a[href^="#"]');
+  var sections = [];
+  links.forEach(function(a) {
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ id: id, el: el, link: a });
+  });
+
+  function updateActive() {
+    var scrollY = window.scrollY + 80;
+    var active = null;
+    for (var i = sections.length - 1; i >= 0; i--) {
+      if (sections[i].el.offsetTop <= scrollY) { active = sections[i]; break; }
+    }
+    links.forEach(function(a) { a.classList.remove('active'); });
+    if (active) active.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+
+  /* ── Search ────────────────────────────────────────────── */
+  var searchInput = document.getElementById('search');
+  var noResults  = document.getElementById('no-results');
+  var algCards   = document.querySelectorAll('.alg-card');
+  var tocL1      = sidebar.querySelectorAll('.toc-l1');
+  var tocL2      = sidebar.querySelectorAll('.toc-l2');
+  var allToc     = sidebar.querySelectorAll('.toc-l1, .toc-l2');
+
+  function doSearch() {
+    var query = searchInput.value.trim().toLowerCase();
+    var anyVisible = false;
+
+    algCards.forEach(function(card) {
+      var data = (card.getAttribute('data-search') || '') + ' ' + (card.textContent || '').toLowerCase();
+      var match = query === '' || data.indexOf(query) !== -1;
+      card.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+
+    /* Show/hide TOC entries */
+    allToc.forEach(function(a) {
+      var href = a.getAttribute('href');
+      if (!href) return;
+      if (query === '') {
+        a.style.display = '';
+        return;
+      }
+      var target = document.getElementById(href.slice(1));
+      if (target) {
+        var parentCard = target.closest('.alg-card');
+        if (parentCard) {
+          a.style.display = parentCard.style.display === 'none' ? 'none' : '';
+        }
+      }
+    });
+
+    noResults.style.display = (query !== '' && !anyVisible) ? '' : 'none';
+  }
+
+  searchInput.addEventListener('input', doSearch);
+})();
+</script>
+
+</body>
+</html>
