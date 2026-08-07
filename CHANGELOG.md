@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.6] - 2026-08-07
+
+- Add comprehensive academic reference manual: 8 algorithms, 1.5K lines, 59 refs
+
 ## [1.3.5] - 2026-07-17
 
 - Dependency panel no longer executes pip: the former "Install Missing (pip)" button is now "Copy Install Command" — it builds the exact `pip install` command for the running QGIS Python interpreter and copies it to the clipboard for the user to run in their own shell (e.g. the OSGeo4W Shell). This removes all process-spawning code from the plugin (the previous installer invoked pip through a dynamically-assembled subprocess import that static security scanning could not see); a regression test now fails if process execution ever returns.
