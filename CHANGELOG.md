@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.8] - 2026-08-07
+
+- Added online user manual link (https://yusufeminoglu.github.io/planx_datacube/) and GitHub repository star call-to-action.
+
 ## [1.3.7] - 2026-08-07
 
 - Add floating Save as PDF button to reference manual
