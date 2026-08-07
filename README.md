@@ -7,6 +7,7 @@
 **Spatiotemporal data cubes for QGIS — xarray/Dask processing, Emerging Hot Spot Analysis, time-series forecasting and voxel rendering.**
 
 [![QGIS](https://img.shields.io/badge/QGIS-3.34%2B-93b023?logo=qgis&logoColor=white)](https://plugins.qgis.org/plugins/planx_datacube/)
+[![Documentation](https://img.shields.io/badge/📖_Reference_Manual-13a0a0)](https://yusufeminoglu.github.io/planx_datacube/)
 [![Version](https://img.shields.io/github/v/tag/YusufEminoglu/planx_datacube?label=version&color=blue)](https://github.com/YusufEminoglu/planx_datacube/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange)](LICENSE)
 [![QGIS Plugin Hub](https://img.shields.io/badge/QGIS%20Hub-install-589632?logo=qgis&logoColor=white)](https://plugins.qgis.org/plugins/planx_datacube/)
