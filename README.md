@@ -16,6 +16,11 @@
 
 ---
 
+## 📖 Documentation
+
+**[Comprehensive Academic Reference Manual](https://yusufeminoglu.github.io/planx_datacube/)** — complete documentation of every feature, parameter, and workflow. Hosted on GitHub Pages.
+
+
 ## Why DataCube Lab?
 
 QGIS handles space well and time poorly. DataCube Lab brings the Python data-science stack (`xarray`, `dask`, `netCDF4`, `statsmodels`, `scikit-learn`) into the Processing Toolbox as a unified, lazy-evaluated pipeline: build an (X×Y×T×V) cube from your vector or raster time series, classify how hot spots evolve, forecast each cell, and render the result volumetrically.
