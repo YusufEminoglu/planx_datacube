@@ -8,7 +8,7 @@
 
 [![QGIS](https://img.shields.io/badge/QGIS-3.34%2B-93b023?logo=qgis&logoColor=white)](https://plugins.qgis.org/plugins/planx_datacube/)
 [![Documentation](https://img.shields.io/badge/📖_Reference_Manual-13a0a0)](https://geophilo.com/planx_datacube/)
-[![Version](https://img.shields.io/github/v/tag/YusufEminoglu/planx_datacube?label=version&color=blue)](https://gitlab.com/geospacephilo/EasyFillet/releases)
+[![Version](https://img.shields.io/github/v/tag/YusufEminoglu/planx_datacube?label=version&color=blue)](https://github.com/YusufEminoglu/planx_datacube/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange)](LICENSE)
 [![QGIS Plugin Hub](https://img.shields.io/badge/QGIS%20Hub-install-589632?logo=qgis&logoColor=white)](https://plugins.qgis.org/plugins/planx_datacube/)
 
@@ -41,7 +41,7 @@ QGIS handles space well and time poorly. DataCube Lab brings the Python data-sci
 
 **From the QGIS Plugin Hub (recommended):** `Plugins → Manage and Install Plugins…` → search for **"PlanX DataCube"** → *Install*.
 
-**From a release zip:** download the latest zip from [Releases](https://gitlab.com/geospacephilo/EasyFillet/releases) → `Plugins → Install from ZIP`.
+**From a release zip:** download the latest zip from [Releases](https://github.com/YusufEminoglu/planx_datacube/releases) → `Plugins → Install from ZIP`.
 
 Requires QGIS 3.34 or newer (Python 3.9+). Optional extras unlock advanced features:
 
@@ -86,12 +86,12 @@ This plugin is one of 15 open-source QGIS plugins for urban planning by the same
 
 | Planning & analysis | CAD & production | 3D & visualization |
 |---|---|---|
-| [PlanX](https://gitlab.com/geospacephilo/EasyFillet) — spatial-planning suite | [PlanX CAD Toolset](https://gitlab.com/geospacephilo/EasyFillet) — drafting-grade CAD | [PlanX 3D City](https://gitlab.com/geospacephilo/EasyFillet) — Three.js city viewer |
-| [GeoStats Lab](https://gitlab.com/geospacephilo/EasyFillet) — spatial statistics | [EasyFillet](https://gitlab.com/geospacephilo/EasyFillet) — tangent-arc fillet | [3D OSM Model](https://gitlab.com/geospacephilo/EasyFillet) — OSM → 3D city in browser |
-| [Suitability Lab](https://gitlab.com/geospacephilo/EasyFillet) — raster MCDA | [Settlement Toolset](https://gitlab.com/geospacephilo/EasyFillet) — 9-stage settlement plans | [OSM Quick 3D](https://gitlab.com/geospacephilo/EasyFillet) — OSM → native QGIS 3D |
-| [DataCube Lab](https://gitlab.com/geospacephilo/EasyFillet) — spatiotemporal cubes | [UIP Toolset](https://gitlab.com/geospacephilo/EasyFillet) — Turkish master-plan automation | [Urban Procedural 3D](https://gitlab.com/geospacephilo/EasyFillet) — parametric zoning lab |
-| [Urban Resilience](https://gitlab.com/geospacephilo/EasyFillet) — 28 resilience tools | [ParcelFlux](https://gitlab.com/geospacephilo/EasyFillet) — parcel subdivision | [CartoLab](https://gitlab.com/geospacephilo/EasyFillet) — publication cartography |
+| [PlanX](https://github.com/YusufEminoglu/planx_datacube) — spatial-planning suite | [PlanX CAD Toolset](https://github.com/YusufEminoglu/planx_datacube) — drafting-grade CAD | [PlanX 3D City](https://github.com/YusufEminoglu/planx_datacube) — Three.js city viewer |
+| [GeoStats Lab](https://github.com/YusufEminoglu/planx_datacube) — spatial statistics | [EasyFillet](https://github.com/YusufEminoglu/planx_datacube) — tangent-arc fillet | [3D OSM Model](https://github.com/YusufEminoglu/planx_datacube) — OSM → 3D city in browser |
+| [Suitability Lab](https://github.com/YusufEminoglu/planx_datacube) — raster MCDA | [Settlement Toolset](https://github.com/YusufEminoglu/planx_datacube) — 9-stage settlement plans | [OSM Quick 3D](https://github.com/YusufEminoglu/planx_datacube) — OSM → native QGIS 3D |
+| [DataCube Lab](https://github.com/YusufEminoglu/planx_datacube) — spatiotemporal cubes | [UIP Toolset](https://github.com/YusufEminoglu/planx_datacube) — Turkish master-plan automation | [Urban Procedural 3D](https://github.com/YusufEminoglu/planx_datacube) — parametric zoning lab |
+| [Urban Resilience](https://github.com/YusufEminoglu/planx_datacube) — 28 resilience tools | [ParcelFlux](https://github.com/YusufEminoglu/planx_datacube) — parcel subdivision | [CartoLab](https://github.com/YusufEminoglu/planx_datacube) — publication cartography |
 
 ## 📜 License & author
 
-GPL-3.0 © [Yusuf Eminoğlu](https://github.com/YusufEminoglu) — bug reports and feature requests welcome in [Issues](https://gitlab.com/geospacephilo/EasyFillet/-/issues).
+GPL-3.0 © [Yusuf Eminoğlu](https://github.com/YusufEminoglu) — bug reports and feature requests welcome in [Issues](https://github.com/YusufEminoglu/planx_datacube/issues).
