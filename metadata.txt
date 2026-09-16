@@ -1,6 +1,6 @@
 [general]
 name=PlanX DataCube Lab
-version=1.3.9
+version=1.3.10
 hasProcessingProvider=yes
 
 category=Processing
@@ -22,6 +22,7 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 
 changelog=
+    1.3.10 - Redesign plugin icon to high-end 3D tactile brand design with circular teal pedestal, zero margin, and refreshed documentation links.
     PlanX DataCube Lab 1.3.5 — Dependency panel no longer executes pip: the Copy Install Command button builds the exact install command for the QGIS Python and copies it to the clipboard; all process-spawning code removed and guarded by a regression test.
     PlanX DataCube Lab 1.3.1 — Fixed QGIS Hub security-scan block: removed accidentally-tracked .pytest_cache (false-positive high-entropy secret) and now gitignored, cleared all 9 remaining flake8 findings (W503/E261).
     PlanX DataCube Lab 1.3.0 — Toolbox documentation links for all 8 algorithms (helpUrl), e2e algorithm-count regression guard, forecasting-fallback warnings surfaced to the Processing log, test suite converted to pytest (97 assertions preserved), lint cleanup (flake8 59→7 findings), command guide added, CITATION.cff version consistency fix.

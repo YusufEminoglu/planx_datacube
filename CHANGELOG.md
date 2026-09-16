@@ -1,5 +1,9 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.3.10] - 2026-09-16
+
+- Redesign plugin icon to high-end 3D tactile brand design with circular teal pedestal, zero margin, and refreshed documentation links.
+
 ## [1.3.9] - 2026-09-06
 
 - Migrate repository and documentation URLs to GitLab and Cloudflare Pages.
