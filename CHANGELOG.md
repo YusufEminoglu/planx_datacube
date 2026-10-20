@@ -1,5 +1,22 @@
 # Changelog — PlanX DataCube Lab
 
+## [1.4.0] - 2026-10-20
+
+### Added
+- **Cube Workbench** — build a long-format panel and a CF-style netCDF cube in one action, then inspect the result as a cells × time heatmap, an animated isometric 3D voxel stack, and a per-cell time-series chart with playback.
+- **Raster-stack cube input** — Build Data Cube now exposes a separate raster parameter; the first raster defines the reference grid and the remaining rasters are sampled onto it.
+- **Analysis-ready panel output** — Build Data Cube writes `cell_id`, `col`, `row`, `time_step`, `time_value` and `value`, so its output feeds EHSA, LISA, trend, anomaly and forecast directly.
+- **CF-style netCDF metadata** — real numeric time coordinates, `time_label`, cell bounds (`x_bnds`/`y_bnds`), CRS (`crs` + `grid_mapping`) and per-variable long names.
+- **Cube grid model** (`core/cube_grid.py`) and pure-logic tests for natural cell ordering, missing-value handling, coverage statistics and downsampling.
+- **Illustrated Quick Start** — the reference manual now walks through the complete workflow with eight real QGIS screenshots: Overview, configured Workbench, built cube, Actions, EHSA Processing dialog, EHSA output, a cell forecast and the netCDF loader.
+
+### Fixed
+- Build Data Cube's raster input was unreachable (the old layer parameter only accepted vectors).
+- QGIS raster block reads at an exact raster extent could return uninitialised no-data values in the last row/column; the reader now pads the request and slices the valid centre.
+- Removed the invalid `QgsVoxelLayer` path (the class does not exist in QGIS 3.44 or 4.2) and replaced the web-facing claim of a native voxel layer with the real integrated 3D preview.
+- DataCube `x`/`y` coordinates are now documented and written as cell centres, not cell corners.
+- The dashboard no longer contains bilingual copy; all shipped UI text is English.
+
 ## [1.3.10] - 2026-09-16
 
 - Redesign plugin icon to high-end 3D tactile brand design with circular teal pedestal, zero margin, and refreshed documentation links.

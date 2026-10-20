@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-PlanX DataCube Lab — Next-generation spatiotemporal analysis engine.
+PlanX DataCube Lab — Spatiotemporal analysis engine for QGIS.
 Multi-dimensional (X×Y×T×V) data cube construction, Emerging Hot Spot
-Analysis, time-series forecasting, and volumetric voxel rendering for QGIS.
+Analysis, time-series forecasting, and an integrated 3D voxel preview.
 
 classFactory returns the PlanXDataCube instance.
 """

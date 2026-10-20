@@ -6,3 +6,8 @@
 # archive. Same convention as zero2cartolab and qgis_25d_styling.
 docs
 .github
+
+# Repository-only planning, prompt and report artefacts.
+DEEPSEEK_PROMPT*
+ENHANCEMENT_PLAN*.md
+REPORT*.md

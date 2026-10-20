@@ -64,6 +64,7 @@ from planx_datacube.core import dependency_manager as dm  # noqa: E402
 from planx_datacube.core import spatial_weights as sw  # noqa: E402
 from planx_datacube.core import timeseries_stats as ts  # noqa: E402
 from planx_datacube.core import local_morans as lm  # noqa: E402
+from planx_datacube.core.cube_grid import CubeGrid  # noqa: E402
 
 
 # ===================================================================
@@ -328,6 +329,12 @@ class TestDataCube:
     def test_time_steps(self):
         assert len(self.cube.time_steps) == 3
 
+    def test_time_values_are_parsed(self):
+        assert self.cube.time_values == [2020.0, 2021.0, 2022.0]
+
+    def test_shape(self):
+        assert self.cube.shape == (3, 2, 2, 3)
+
     def test_variable_names(self):
         assert self.cube.variable_names == ["temp", "pop"]
 
@@ -372,6 +379,61 @@ class TestDataCube:
             print(f"  WARN: to_zarr exception: {e} (expected if zarr not installed)")
 
 
+class TestDataCubeGrid:
+    """Rectangular cube view used by the interactive workbench."""
+
+    def setup_method(self):
+        self.panel = types.SimpleNamespace(
+            times=[0, 1, 2],
+            locations=["cell_10", "cell_2", "cell_1"],
+            loc_times={
+                "cell_10": {0: 1.0, 1: 2.0, 2: 3.0},
+                "cell_2": {0: 10.0, 2: 30.0},
+                "cell_1": {0: 4.0, 1: 5.0, 2: 6.0},
+            },
+        )
+        self.grid = CubeGrid.from_panel(self.panel, source="unit")
+
+    def test_natural_cell_order(self):
+        assert self.grid.cell_ids == ["cell_1", "cell_2", "cell_10"]
+
+    def test_grid_shape(self):
+        assert self.grid.n_cells == 3 and self.grid.n_times == 3
+
+    def test_missing_values_are_nan(self):
+        assert math.isnan(self.grid.values[1][1])
+
+    def test_series(self):
+        assert self.grid.series(0) == [4.0, 5.0, 6.0]
+
+    def test_stats_coverage(self):
+        stats = self.grid.stats()
+        assert stats["n_values"] == 8.0
+        assert abs(stats["coverage"] - 8.0 / 9.0) < 1e-9
+
+    def test_stats_range(self):
+        stats = self.grid.stats()
+        assert stats["min"] == 1.0 and stats["max"] == 30.0
+        assert abs(stats["mean"] - 7.625) < 1e-9
+
+    def test_value_range_constant_is_padded(self):
+        grid = CubeGrid(["a"], [0], [[7.0]])
+        low, high = grid.value_range()
+        assert low == 7.0 and high > low
+
+    def test_downsample_maps_back_to_original(self):
+        small = self.grid.downsample(max_cells=2, max_times=2)
+        assert small.n_cells == 2 and small.n_times == 2
+        assert small.cell_blocks is not None and small.time_blocks is not None
+        assert small.cell_blocks[0][0] == 0
+        assert small.time_blocks[-1][1] == 3
+
+    def test_downsample_mean(self):
+        small = self.grid.downsample(max_cells=1, max_times=1)
+        assert small.n_cells == 1 and small.n_times == 1
+        assert abs(small.values[0][0] - 7.625) < 1e-9
+
+
 # ===================================================================
 # 9. DEPENDENCY MANAGER
 # ===================================================================
@@ -389,15 +451,15 @@ class TestDependencyManager:
 
     def test_netcdf4_in_results(self):
         avail, miss_req, miss_opt = dm.check_packages(dm.DATA_CUBE_DEPS)
-        assert "netCDF4" in avail or "netCDF4" in miss_req
+        assert "netCDF4" in avail + miss_req + miss_opt
 
     def test_statsmodels_in_results(self):
         avail, miss_req, miss_opt = dm.check_packages(dm.DATA_CUBE_DEPS)
-        assert "statsmodels" in avail or "statsmodels" in miss_req
+        assert "statsmodels" in avail + miss_req + miss_opt
 
     def test_scikit_learn_in_results(self):
         avail, miss_req, miss_opt = dm.check_packages(dm.DATA_CUBE_DEPS)
-        assert "scikit-learn" in avail or "scikit-learn" in miss_req
+        assert "scikit-learn" in avail + miss_req + miss_opt
 
     def test_status_report_nonempty(self):
         report = dm.get_status_report(dm.DATA_CUBE_DEPS, "DATACUBE")

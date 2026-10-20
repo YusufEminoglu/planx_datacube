@@ -69,7 +69,8 @@ class SpaceTimeCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
             "time_value, value, count) — that feeds directly into Emerging Hot "
             "Spot Analysis, Temporal Trend, Anomaly and Forecast tools "
             "(ID = cell_id, Time = time_step, Value = value).\n\n"
-            "Optionally writes the cube to netCDF4 for voxel rendering."
+            "Optionally writes the cube to CF-style netCDF4 for the Workbench "
+            "3-D preview or external analysis."
         )
 
     def initAlgorithm(self, config=None):
@@ -277,8 +278,17 @@ class SpaceTimeCubeAlgorithm(DataCubeHelpMixin, QgsProcessingAlgorithm):
             try:
                 x_centers = [x_min + (c + 0.5) * grid_size for c in range(ncols)]
                 y_centers = [y_min + (r + 0.5) * grid_size for r in range(nrows)]
-                cube = DataCube(x_centers, y_centers,
-                                [str(tv) for tv in time_values], ["value"])
+                crs_wkt = ""
+                if source.sourceCrs() and source.sourceCrs().isValid():
+                    crs_wkt = source.sourceCrs().toWkt()
+                cube = DataCube(
+                    x_centers, y_centers,
+                    [str(tv) for tv in time_values], ["value"],
+                    time_values=list(time_values),
+                    crs_wkt=crs_wkt,
+                    x_res=grid_size,
+                    y_res=grid_size,
+                )
                 for (col, row, b), rec in acc.items():
                     value, _cnt = aggregate(rec)
                     if value is not None:

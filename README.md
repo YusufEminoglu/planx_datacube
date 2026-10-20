@@ -4,7 +4,7 @@
 
 # PlanX DataCube Lab
 
-**Spatiotemporal data cubes for QGIS — xarray/Dask processing, Emerging Hot Spot Analysis, time-series forecasting and voxel rendering.**
+**Spatiotemporal data cubes for QGIS — CF-style netCDF cubes, Emerging Hot Spot Analysis, time-series forecasting and an interactive 3D voxel preview.**
 
 [![QGIS](https://img.shields.io/badge/QGIS-3.34%2B-93b023?logo=qgis&logoColor=white)](https://plugins.qgis.org/plugins/planx_datacube/)
 [![Documentation](https://img.shields.io/badge/📖_Reference_Manual-13a0a0)](https://geophilo.com/planx_datacube/)
@@ -18,24 +18,25 @@
 
 ## 📖 Documentation
 
-**[Comprehensive Academic Reference Manual](https://geophilo.com/planx_datacube/)** — complete documentation of every feature, parameter, and workflow. Hosted on Web Documentation.
+**[Comprehensive Academic Reference Manual](https://geophilo.com/planx_datacube/)** — complete documentation of every feature, parameter, and workflow, including an illustrated Quick Start that walks through the Workbench, an analysis, a forecast and netCDF reload with real QGIS screenshots. Hosted on Web Documentation.
 
 
 ## Why DataCube Lab?
 
-QGIS handles space well and time poorly. DataCube Lab brings the Python data-science stack (`xarray`, `dask`, `netCDF4`, `statsmodels`, `scikit-learn`) into the Processing Toolbox as a unified, lazy-evaluated pipeline: build an (X×Y×T×V) cube from your vector or raster time series, classify how hot spots evolve, forecast each cell, and render the result volumetrically.
+QGIS handles space well and time poorly. DataCube Lab closes that gap with a complete, inspectable space–time pipeline: aggregate events into a fishnet panel, build an (X×Y×T×V) cube from vector or raster time series, explore it in an integrated heatmap / voxel / series workbench, classify how hot spots evolve, forecast each cell, and export CF-style netCDF for downstream science. Optional Python packages (`netCDF4`, `statsmodels`, `scikit-learn`) unlock netCDF I/O and advanced forecasters; every analysis has a dependency-free fallback.
 
 ## ✨ Features
 
 - **Cube Builder** — vector/raster → multi-dimensional (X×Y×T×V) data cube with optional netCDF4/Zarr export.
 - **Space-Time Cube Aggregation** — bin point events into a fishnet × time-step panel (count / sum / mean / max / min); the one-click front door to every analysis tool below, with optional netCDF cube output.
+- **Cube Workbench** — build a panel and cube in one action, then inspect a cells × time heatmap, an animated isometric 3D voxel stack and a per-cell time series; the same action can write a CF-style netCDF file.
 - **Emerging Hot Spot Analysis** — Getis-Ord Gi* with *true* spatial neighbourhoods (fixed distance band or K-nearest) + Mann-Kendall trend → 17 spatiotemporal pattern classes, auto-styled.
 - **Local Outlier Analysis (Local Moran's I)** — Anselin LISA cluster/outlier map (High-High, Low-Low, High-Low, Low-High) with a deterministic conditional-permutation significance test.
 - **Temporal Trend Analysis** — Mann-Kendall + Theil-Sen slope per location → Increasing / Decreasing / No-trend.
 - **Temporal Anomaly Detection** — robust median/MAD (or classic) z-score flags anomalous time steps per location.
 - **Forecasting Studio** — ARIMA, Random Forest and Exponential Smoothing per-cell prediction with an auto-fallback chain.
 - **Forecast Backtest** — hold-out MAE / RMSE / MAPE per method picks the most trustworthy forecaster before you project forward.
-- **Voxel Bridge** — configuration dialog for QGIS 4 native volumetric voxel layer rendering.
+- **Interactive 3D Voxel Preview** — a dependency-free isometric voxel stack inside the Cube Workbench, with a time slider and playback. It works in every supported QGIS version and needs no native voxel-layer API.
 
 ## 🚀 Installation
 
@@ -55,7 +56,7 @@ pip install netCDF4 statsmodels scikit-learn
 2. Run **Space-Time Cube Aggregation** on a point/event layer (with a numeric time field) to produce a long-format panel: one row per grid cell per time step.
 3. Feed that panel (ID = `cell_id`, Time = `time_step`, Value = `value`) into **Emerging Hot Spot Analysis**, **Local Outlier Analysis**, **Temporal Trend** or **Temporal Anomaly Detection**.
 4. Use **Forecast Backtest** to find the best method, then **Time-Series Forecast** to project the series forward.
-5. Build a netCDF cube (Cube Builder or Space-Time Cube) and open the **Voxel Bridge** dialog to render it volumetrically in QGIS 4.
+5. Open the **Cube Workbench** from the plugin dialog to build the panel and netCDF cube together, then scrub time through the heatmap, 3D voxel preview and per-cell series.
 
 All analysis tools share the same panel contract, so any layer with *location id*, *numeric time* and *value* fields works directly — the Space-Time Cube is just the easiest way to create one.
 

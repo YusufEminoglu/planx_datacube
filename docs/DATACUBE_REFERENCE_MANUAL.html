@@ -222,13 +222,68 @@ footer {
 }
 .video-embed { position: relative; width: 100%; padding-top: 56.25%; margin: 4px 0 28px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: #000; }
 .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* ── Illustrated Quick Start ────────────────────────────── */
+.qs-intro {
+  background: var(--white); border: 1px solid var(--border); border-radius: 8px;
+  padding: 1rem 1.25rem; margin: 0 0 1.2rem; font-size: 0.92rem; color: var(--slate);
+}
+.qs-step {
+  display: grid; grid-template-columns: 42px minmax(0, 1fr);
+  gap: 0.85rem; margin: 1.8rem 0 0.4rem;
+}
+.qs-step .qs-num {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--navy); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem;
+}
+.qs-step h3 { margin: 0.35rem 0 0.45rem; font-size: 1.12rem; }
+.qs-step h3 .qs-kicker {
+  display: block; font-size: 0.7rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0.1rem;
+}
+.manual-figure {
+  margin: 0.9rem 0 1.8rem; padding: 0.5rem;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  break-inside: avoid;
+}
+.manual-figure a { display: block; }
+.manual-figure img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid #e4ecef; border-radius: 5px;
+}
+.manual-figure figcaption {
+  padding: 0.6rem 0.4rem 0.2rem; font-size: 0.82rem;
+  line-height: 1.55; color: var(--muted);
+}
+.manual-figure figcaption strong { color: var(--slate); }
+.manual-figure .zoom-hint {
+  display: block; margin-top: 0.25rem; font-size: 0.74rem; color: var(--muted);
+}
+.qs-callout {
+  border-left: 4px solid var(--gold); background: #fffdf5;
+  padding: 0.8rem 1rem; border-radius: 0 6px 6px 0;
+  margin: 1rem 0 1.2rem; font-size: 0.88rem; color: var(--slate);
+}
+.qs-callout strong { color: var(--navy); }
+.qs-checklist { margin: 0.5rem 0 1rem 1.2rem; font-size: 0.9rem; }
+.qs-checklist li { margin-bottom: 0.35rem; }
+.qs-checklist code, .qs-callout code {
+  font-size: 0.82rem; background: var(--paper); padding: 0.12rem 0.35rem;
+  border-radius: 3px; color: var(--accent);
+}
+#quickstart, .qs-step, .manual-figure {
+  scroll-margin-top: calc(var(--header-h) + 1rem);
+}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">PlanX <span>DataCube</span> Lab</div>
-  <div class="version">Academic Reference Manual &bull; v1.3.9</div>
+  <div class="version">Academic Reference Manual &bull; v1.4.0</div>
 </header>
 
 <div class="layout">
@@ -240,6 +295,15 @@ footer {
     <input type="text" id="search" placeholder="Search algorithms&hellip;" autocomplete="off">
   </div>
   <a href="#preface" class="toc-l1">Preface</a>
+  <a href="#quickstart" class="toc-l1">Quick Start (illustrated)</a>
+  <a href="#qs-open" class="toc-l2">1. Open the dashboard</a>
+  <a href="#qs-data" class="toc-l2">2. Prepare the event layer</a>
+  <a href="#qs-build" class="toc-l2">3. Build the cube</a>
+  <a href="#qs-inspect" class="toc-l2">4. Inspect the result</a>
+  <a href="#qs-analyse" class="toc-l2">5. Run an analysis</a>
+  <a href="#qs-forecast" class="toc-l2">6. Forecast one cell</a>
+  <a href="#qs-netcdf" class="toc-l2">7. Reopen a saved cube</a>
+  <a href="#qs-troubleshoot" class="toc-l2">Troubleshooting</a>
   <a href="#algorithm-1" class="toc-l1">1. Build Spatiotemporal Data Cube</a>
   <a href="#algorithm-1-theory" class="toc-l2">Theoretical Background</a>
   <a href="#algorithm-1-math" class="toc-l2">Mathematical Formulation</a>
@@ -315,8 +379,311 @@ footer {
   analysis, and forecasting of spatiotemporal data cubes. This manual documents the theoretical foundations,
   mathematical formulations, parameter specifications, and interpretation guidelines for each algorithm.
   All algorithms operate within the QGIS Processing framework and produce reproducible, citation-ready outputs.
-  The plugin is maintained as part of the PlanX ecosystem under the GPL-3.0 license.
+  The plugin's Cube Workbench can build a panel and CF-style netCDF cube in one action, then inspect the
+  result as a cells × time heatmap, an animated isometric 3D voxel stack, and a per-cell time series before
+  handing the same panel to any analysis algorithm. The plugin is maintained as part of the PlanX ecosystem
+  under the GPL-3.0 license.
 </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ILLUSTRATED QUICK START
+     ══════════════════════════════════════════════════════════ -->
+
+<section id="quickstart">
+  <h2>Quick Start: From Events to an Analysed Cube</h2>
+
+  <div class="qs-intro">
+    <p><strong>What this chapter is.</strong> A practical, screenshot-by-screenshot walkthrough of the
+    complete PlanX DataCube Lab workflow: open the dashboard, turn an event layer into a fishnet panel,
+    inspect the cube, run an analysis, forecast a cell, and reopen the saved cube later. The algorithm
+    chapters that follow explain the statistics; this chapter shows the clicks.</p>
+    <p>The example uses a synthetic point layer with <strong>64 sites &times; 8 annual observations</strong>
+    in EPSG:32635, a <strong>1,000 m</strong> fishnet and <strong>one time bin per year</strong>. Every
+    figure below is a real QGIS 4.2 screenshot of that workflow. All screenshots can be opened at full
+    resolution by clicking them.</p>
+  </div>
+
+  <div class="qs-step" id="qs-open">
+    <div class="qs-num">1</div>
+    <div>
+      <h3><span class="qs-kicker">Open</span>Start the dashboard</h3>
+      <p>Install the plugin from the QGIS Plugin Manager (or <em>Plugins &rarr; Manage and Install
+      Plugins &rarr; Install from ZIP</em>), enable it, then click the
+      <strong>PlanX DataCube Lab</strong> toolbar button or choose
+      <strong>Plugins &rarr; PlanX DataCube Lab</strong>. The dashboard opens on the Overview tab.</p>
+      <p>The <strong>Overview</strong> tab reports the project layer count, how many of the eight
+      algorithms are registered, and the current Workbench state. Use its links to jump straight to the
+      Workbench, the algorithm catalogue or the forecasting studio.</p>
+    </div>
+  </div>
+
+  <figure class="manual-figure">
+    <a href="images/manual/01_dashboard_overview.png" target="_blank" rel="noopener">
+      <img src="images/manual/01_dashboard_overview.png"
+           alt="PlanX DataCube Lab dashboard, Overview tab, with pipeline cards, algorithm catalogue and links to the Workbench."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 1.</strong> The Overview tab is the front door: project status, the five
+    stages of the workflow and the processing IDs of all eight algorithms.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <div class="qs-step" id="qs-data">
+    <div class="qs-num">2</div>
+    <div>
+      <h3><span class="qs-kicker">Prepare</span>Check the event layer</h3>
+      <p>The Workbench builds its own fishnet, so your input does <em>not</em> need to be gridded. It
+      needs one row per observation and two numeric fields:</p>
+      <table class="param-table">
+        <thead>
+          <tr><th>Role</th><th>Example field</th><th>Requirement</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Time</td><td><code>year</code></td><td>Numeric year, timestamp or time-step index. Text dates should be converted to a numeric field first.</td></tr>
+          <tr><td>Value</td><td><code>value</code></td><td>Numeric measurement to aggregate (count, sum, mean, maximum or minimum).</td></tr>
+          <tr><td>Geometry</td><td>point or polygon</td><td>Any vector geometry in a projected CRS; the Workbench grid size is expressed in that CRS&rsquo;s map units.</td></tr>
+          <tr><td>Location ID</td><td><code>site</code></td><td>Optional for event data; useful for labelling. A ready-made panel should use <code>cell_id</code>.</td></tr>
+        </tbody>
+      </table>
+      <div class="qs-callout">
+        <strong>Already have a panel?</strong> If the layer already contains
+        <code>cell_id</code> (or <code>location_id</code>), <code>time_step</code> (or <code>time</code>)
+        and <code>value</code>, load it directly with <strong>Workbench &rarr; Event layer</strong> or
+        use <strong>Load netCDF&hellip;</strong> for a saved cube. The Workbench detects panel fields and
+        will refuse to aggregate a panel a second time.
+      </div>
+    </div>
+  </div>
+
+  <div class="qs-step" id="qs-build">
+    <div class="qs-num">3</div>
+    <div>
+      <h3><span class="qs-kicker">Build</span>Configure and build the cube</h3>
+      <p>Open the <strong>Workbench</strong> tab and set the six controls:</p>
+      <ol class="qs-checklist">
+        <li><strong>Event layer</strong> &mdash; the source observations.</li>
+        <li><strong>Time field</strong> and <strong>Value field</strong> &mdash; the two numeric fields above.</li>
+        <li><strong>Aggregation</strong> &mdash; <em>Mean</em> is used in this example; use <em>Count</em> for incident-style data.</li>
+        <li><strong>Grid cell</strong> &mdash; fishnet cell size in map units (here, 1,000 m).</li>
+        <li><strong>Time step</strong> &mdash; bin width; <em>one bin per value</em> keeps each distinct year separate.</li>
+        <li><strong>netCDF</strong> &mdash; optional output path; leave blank to keep only the in-project panel.</li>
+      </ol>
+      <p>Click <strong>Build Cube</strong>. The plugin runs the Space-Time Cube algorithm, adds a
+      <code>DataCube &middot; &lt;layer&gt;</code> panel to the project, and loads the same panel into the
+      viewers.</p>
+    </div>
+  </div>
+
+  <figure class="manual-figure">
+    <a href="images/manual/02_workbench_setup.png" target="_blank" rel="noopener">
+      <img src="images/manual/02_workbench_setup.png"
+           alt="Cube Workbench form configured with an event layer, year field, value field, mean aggregation, 1000 metre grid, one bin per value and a netCDF output path."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 2.</strong> The Workbench controls before the first build. Choose the
+    event layer, time and value fields, aggregation, grid cell and time step, then click
+    <strong>Build Cube</strong>; the heatmap, voxel stack and series fill immediately. A long netCDF
+    path can be typed, pasted or chosen with the <strong>&hellip;</strong> button.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <div class="qs-step" id="qs-inspect">
+    <div class="qs-num">4</div>
+    <div>
+      <h3><span class="qs-kicker">Inspect</span>Read the cube before analysing it</h3>
+      <p>A successful build fills five KPI cards and three linked views:</p>
+      <ul class="qs-checklist">
+        <li><strong>Cells / Time steps / Observations</strong> &mdash; the cube dimensions. Here: 64 cells, 8 years, 512 populated observations.</li>
+        <li><strong>Coverage</strong> &mdash; populated cells &divide; all cell&times;time positions. Low coverage means the grid or time step is too fine for the data.</li>
+        <li><strong>Value range</strong> &mdash; minimum and maximum after aggregation.</li>
+        <li><strong>Space&ndash;time heatmap</strong> &mdash; one row per cell, one column per time step. Hover for values; click a row to select that cell.</li>
+        <li><strong>3-D voxel preview</strong> &mdash; an isometric stack of time slices. Use <strong>Play</strong> or the slider to scrub through time; the current slice is highlighted.</li>
+        <li><strong>Selected cell series</strong> &mdash; the full time series for the selected heatmap row, with the current time marker and mean reference line.</li>
+      </ul>
+      <p>Try a few cells before running an analysis. A flat series produces a flat forecast; a
+      checkerboard pattern in the heatmap is usually a sign that the grid is finer than the event
+      density supports.</p>
+    </div>
+  </div>
+
+  <figure class="manual-figure">
+    <a href="images/manual/03_workbench_result.png" target="_blank" rel="noopener">
+      <img src="images/manual/03_workbench_result.png"
+           alt="Cube Workbench after a build, showing 64 cells, 8 time steps, 512 observations, 100 percent coverage, a space-time heatmap, a 3D voxel stack and a selected cell series."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 3.</strong> The same Workbench after <strong>Build Cube</strong>. The
+    heatmap exposes the west&ndash;east gradient and the compact high-value region; the voxel stack and
+    the series use the same underlying grid.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <div class="qs-step" id="qs-analyse">
+    <div class="qs-num">5</div>
+    <div>
+      <h3><span class="qs-kicker">Analyse</span>Run a spatiotemporal analysis</h3>
+      <p>Open the <strong>Actions</strong> tab and choose <strong>Emerging Hot Spots &rarr; Run</strong>
+      (or use <strong>Algorithms</strong> / the Processing Toolbox and search for
+      <code>planx_datacube:emerging_hot_spot_analysis</code>). In the algorithm dialog:</p>
+      <ul class="qs-checklist">
+        <li><strong>Input panel data layer</strong> &mdash; the <code>DataCube &middot; &hellip;</code> panel just created.</li>
+        <li><strong>Location ID field</strong> &mdash; <code>cell_id</code>.</li>
+        <li><strong>Time step field</strong> &mdash; <code>time_step</code>.</li>
+        <li><strong>Value field</strong> &mdash; <code>value</code>.</li>
+        <li><strong>Spatial relationship</strong> &mdash; <em>K nearest neighbours</em> with <code>k = 8</code> by default, or a fixed distance band when the interaction range is known.</li>
+        <li><strong>Significance threshold</strong> &mdash; <code>0.05</code> unless the study requires a stricter cut-off.</li>
+      </ul>
+      <p>The output is one row per cell with <code>ehsa_code</code>, <code>ehsa_label</code>,
+      <code>mk_tau</code>, <code>mk_p_value</code> and <code>mk_slope</code>, plus the standard
+      17-class renderer. Red classes are hot spots, blue classes are cold spots, and grey is
+      <em>Not Significant</em>.</p>
+    </div>
+  </div>
+
+  <figure class="manual-figure">
+    <a href="images/manual/04_actions.png" target="_blank" rel="noopener">
+      <img src="images/manual/04_actions.png"
+           alt="Actions tab with grouped cards for the Workbench, cube building, netCDF loading, EHSA, LISA, trend, anomaly and forecasting."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 4.</strong> The Actions tab groups the whole workflow. Every card opens
+    the corresponding Processing dialog with the current project context.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <figure class="manual-figure">
+    <a href="images/manual/05_ehsa_dialog.png" target="_blank" rel="noopener">
+      <img src="images/manual/05_ehsa_dialog.png"
+           alt="EHSA Processing dialog with the panel layer, cell_id, time_step, value, a 0.05 threshold, K nearest neighbours and four neighbours."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 5.</strong> The same action in the Processing dialog. Every parameter
+    used in this walkthrough is visible before <strong>Run</strong> is pressed; the algorithm&rsquo;s
+    short help stays open on the right.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <figure class="manual-figure">
+    <a href="images/manual/06_ehsa_output.png" target="_blank" rel="noopener">
+      <img src="images/manual/06_ehsa_output.png"
+           alt="EHSA classified output map with red persistent hot spots, blue cold spots, grey not-significant cells and a category legend."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 6.</strong> A real EHSA result from the 64-cell panel used in this
+    walkthrough (KNN, <code>k = 4</code>). The legend lists only the pattern classes present in the
+    output. The renderer is applied automatically, so the map is ready to style, print or export.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <div class="qs-step" id="qs-forecast">
+    <div class="qs-num">6</div>
+    <div>
+      <h3><span class="qs-kicker">Forecast</span>Project one cell</h3>
+      <p>Open the <strong>Forecasting</strong> tab, select the panel layer, then set the location ID,
+      time and value fields, the target cell, the method and the number of steps. <strong>Auto-select
+      best</strong> chooses between ARIMA, Random Forest and exponential smoothing; the chosen method is
+      printed in the chart legend.</p>
+      <p>Click <strong>Run Forecast and Plot</strong>. The chart combines the observed series with the
+      projection, and <strong>Export Chart&hellip;</strong> writes a PNG for reports. Forecasts beyond
+      roughly one third of the observed series length should be treated as scenarios, not predictions.</p>
+    </div>
+  </div>
+
+  <figure class="manual-figure">
+    <a href="images/manual/07_forecast_studio.png" target="_blank" rel="noopener">
+      <img src="images/manual/07_forecast_studio.png"
+           alt="Forecasting tab with panel fields, target cell 56, automatic method and five forecast steps, showing observed and forecast lines."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 7.</strong> Cell 56 of the example cube. The observed eight-year series
+    is shown in blue; the dashed red segment is the five-step forecast. With
+    <code>statsmodels</code> or <code>scikit-learn</code> unavailable, the plugin falls back to
+    exponential smoothing and names that method in the legend.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <div class="qs-step" id="qs-netcdf">
+    <div class="qs-num">7</div>
+    <div>
+      <h3><span class="qs-kicker">Reopen</span>Load a saved netCDF cube</h3>
+      <p>If you supplied a netCDF path during the build, the cube can be reopened later without the
+      original event layer. Click <strong>Load netCDF&hellip;</strong> in the Workbench, choose the
+      <code>.nc</code> or <code>.nc4</code> file, select the data variable, and click <strong>Open</strong>.
+      The heatmap, voxel preview and series are reconstructed from the file.</p>
+      <p>The reader expects a CF-style <code>time &times; y &times; x</code> data variable and uses the
+      <code>time_label</code> coordinate for display labels when it is present. A netCDF written by this
+      plugin already satisfies both conventions.</p>
+    </div>
+  </div>
+
+  <figure class="manual-figure">
+    <a href="images/manual/08_netcdf_open.png" target="_blank" rel="noopener">
+      <img src="images/manual/08_netcdf_open.png"
+           alt="Open netCDF Cube dialog with a selected file and the value data variable."
+           loading="lazy">
+    </a>
+    <figcaption><strong>Figure 8.</strong> The netCDF picker. The variable list contains every
+    three-dimensional data variable; coordinate variables and bounds are filtered out.
+    <span class="zoom-hint">Click to open the full-resolution PNG.</span></figcaption>
+  </figure>
+
+  <div class="qs-step" id="qs-troubleshoot">
+    <div class="qs-num">?</div>
+    <div>
+      <h3><span class="qs-kicker">Diagnose</span>Common problems</h3>
+      <table class="param-table">
+        <thead>
+          <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>&ldquo;This layer is already a cube panel&rdquo;</td>
+            <td>The Workbench is pointed at a panel, not at the original events.</td>
+            <td>Select the source event layer in <strong>Event layer</strong>. Aggregating a panel again would create a cube of a cube.</td>
+          </tr>
+          <tr>
+            <td>Very low coverage or many empty cells</td>
+            <td>The fishnet is finer than the event density, or the time step is too narrow.</td>
+            <td>Increase <strong>Grid cell</strong> or <strong>Time step</strong>, or use a coarser aggregation unit.</td>
+          </tr>
+          <tr>
+            <td>Build fails with no cells</td>
+            <td>The event extent is smaller than one grid cell, or the source has no valid time/value pairs.</td>
+            <td>Reduce the grid size below the extent; check for null time and value fields.</td>
+          </tr>
+          <tr>
+            <td>Empty or unreadable netCDF list</td>
+            <td><code>netCDF4</code> is not installed, or the file has no 3-D data variable.</td>
+            <td>Install <code>netCDF4</code> (see the <strong>Setup</strong> tab) and choose a variable with dimensions <code>time &times; y &times; x</code>.</td>
+          </tr>
+          <tr>
+            <td>Forecast is a flat line</td>
+            <td>Exponential smoothing fallback on a noisy or very short series.</td>
+            <td>Install <code>statsmodels</code> / <code>scikit-learn</code>, or shorten the horizon. A constant projection is a valid result for a stationary series.</td>
+          </tr>
+          <tr>
+            <td>EHSA returns only &ldquo;Not Significant&rdquo;</td>
+            <td>Too few time steps, too few neighbours, or a threshold that is too strict.</td>
+            <td>Use at least 5&ndash;10 time steps, check the KNN/distance setting, and start with <code>p = 0.05</code> before tightening it.</td>
+          </tr>
+          <tr>
+            <td>No DataCube algorithms in Processing</td>
+            <td>The Processing plugin or the provider is not loaded.</td>
+            <td>Enable <strong>Processing</strong> in the Plugin Manager, then restart QGIS and reopen the dashboard.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qs-callout">
+    <strong>Next step.</strong> The workflow above produces the panel consumed by every analysis.
+    Continue with <a href="#algorithm-3">Emerging Hot Spot Analysis</a>,
+    <a href="#algorithm-4">Local Outlier Analysis</a>, <a href="#algorithm-5">Temporal Trend</a>,
+    <a href="#algorithm-6">Temporal Anomaly</a>, <a href="#algorithm-8">Time-Series Forecast</a> or
+    <a href="#algorithm-7">Forecast Backtest</a> for the statistical details behind each output.
+  </div>
+</section>
 
 <!-- ══════════════════════════════════════════════════════════
      ALGORITHM 1: BUILD SPATIOTEMPORAL DATA CUBE
@@ -397,13 +764,15 @@ footer {
     <table class="param-table">
       <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td><code>input_layers</code></td><td>Multi-layer (vector/raster)</td><td>Ordered list of time-stamped layers. Order determines the temporal index.</td></tr>
+        <tr><td><code>vector_layers</code></td><td>Multi-layer (vector)</td><td>Ordered list of time-stamped vector layers. Layer names supply the time labels.</td></tr>
+        <tr><td><code>raster_layers</code></td><td>Multi-layer (raster)</td><td>Ordered list of single-band rasters. The first raster defines the reference grid; later rasters are sampled onto it.</td></tr>
         <tr><td><code>value_field</code></td><td>Field name</td><td>Numeric attribute used to populate cell values for vector input. Ignored for raster input.</td></tr>
         <tr><td><code>grid_cell_size</code></td><td>Float (CRS units)</td><td>Side length of each square grid cell. Smaller values increase spatial resolution and computational cost.</td></tr>
         <tr><td><code>input_type</code></td><td>Enum: <code>vector</code>, <code>raster</code></td><td>Determines whether polygon rasterisation or direct raster band extraction is used.</td></tr>
         <tr><td><code>output_netcdf</code></td><td>File path (optional)</td><td>If set, writes the cube as a CF-compliant netCDF4 file.</td></tr>
         <tr><td><code>output_zarr</code></td><td>Directory path (optional)</td><td>If set, writes the cube as a chunked Zarr store.</td></tr>
         <tr><td><code>output_grid</code></td><td>Polygon layer (optional)</td><td>If set, emits the fishnet geometry for the first time step as a reference layer.</td></tr>
+        <tr><td><code>output_panel</code></td><td>Polygon layer (optional)</td><td>If set, emits one row per populated cell and time step (<code>cell_id</code>, <code>col</code>, <code>row</code>, <code>time_step</code>, <code>time_value</code>, <code>value</code>) so the cube feeds every analysis algorithm directly.</td></tr>
       </tbody>
     </table>
 
@@ -414,9 +783,11 @@ footer {
       <p><strong>Grid layer</strong> (optional). A polygon layer with columns <code>col</code>,
       <code>row</code>, and <code>cell_id = row * ncols + col</code>. Geometry is the fishnet rectangle
       for the first time step.</p>
-      <p><strong>netCDF4 file</strong> (optional). Contains the variable <code>cube_value</code> with
-      dimensions <code>(time, y, x)</code>, plus CF coordinate variables and global attributes
-      (<code>Conventions</code>, <code>source</code>, <code>history</code>).</p>
+      <p><strong>netCDF4 file</strong> (optional). Contains one data variable per cube variable
+      (the field name for vector input, <code>value</code> for raster input) with dimensions
+      <code>(time, y, x)</code>, numeric <code>time</code>, <code>x</code>/<code>y</code> cell centres,
+      <code>x_bnds</code>/<code>y_bnds</code>, a <code>crs</code> grid-mapping variable, and CF global
+      attributes (<code>Conventions</code>, <code>source</code>, <code>summary</code>).</p>
       <p><strong>Zarr store</strong> (optional). Directory containing the Zarr hierarchy with
       <code>.zarray</code> and <code>.zattrs</code> metadata. Supports concurrent reads and
       cloud-object-store backends.</p>
@@ -431,7 +802,7 @@ footer {
     </p>
     <p>
       netCDF4 output is recommended for single-file portability and compatibility with Panoply, QGIS, and
-      Python's <code>xarray</code>. Zarr output is recommended for cloud-native workflows where parallel,
+      Python's <code>xarray</code> (the exported dimensions follow the same <code>time × y × x</code> convention). Zarr output is recommended for cloud-native workflows where parallel,
       chunked reads are needed. Both formats preserve the full precision of the rasterised values; no
       rounding or quantisation is performed unless the input type requires it.
     </p>
@@ -1506,6 +1877,7 @@ footer {
   var searchInput = document.getElementById('search');
   var noResults  = document.getElementById('no-results');
   var algCards   = document.querySelectorAll('.alg-card');
+  var quickstart = document.getElementById('quickstart');
   var tocL1      = sidebar.querySelectorAll('.toc-l1');
   var tocL2      = sidebar.querySelectorAll('.toc-l2');
   var allToc     = sidebar.querySelectorAll('.toc-l1, .toc-l2');
@@ -1521,6 +1893,10 @@ footer {
       if (match) anyVisible = true;
     });
 
+    var quickstartMatch = query === '' || (quickstart.textContent || '').toLowerCase().indexOf(query) !== -1;
+    if (quickstartMatch) anyVisible = true;
+    quickstart.style.display = quickstartMatch ? '' : 'none';
+
     /* Show/hide TOC entries */
     allToc.forEach(function(a) {
       var href = a.getAttribute('href');
@@ -1534,6 +1910,8 @@ footer {
         var parentCard = target.closest('.alg-card');
         if (parentCard) {
           a.style.display = parentCard.style.display === 'none' ? 'none' : '';
+        } else if (target.closest('#quickstart')) {
+          a.style.display = quickstartMatch ? '' : 'none';
         }
       }
     });

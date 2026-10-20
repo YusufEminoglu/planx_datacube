@@ -1,13 +1,13 @@
 [general]
 name=PlanX DataCube Lab
-version=1.3.10
+version=1.4.0
 hasProcessingProvider=yes
 
 category=Processing
-tags=spatiotemporal, data cube, emerging hot spot, time series, forecasting, netcdf, xarray, voxel, planx
+tags=spatiotemporal, data cube, emerging hot spot, time series, forecasting, netcdf, cf, voxel, planx
 
-description=Next-generation spatiotemporal analysis engine: data cubes, Emerging Hot Spot Analysis, time-series forecasting, and volumetric voxel rendering for QGIS.
-about=PlanX DataCube Lab brings space-time cube analytics to QGIS by integrating xarray/Dask multi-dimensional array processing into a unified Processing framework. Build (X×Y×T×V) data cubes from vector or raster time series, run Emerging Hot Spot Analysis (EHSA) with 17 spatiotemporal pattern classifications, forecast future values via integrated ARIMA and Random Forest models, and render 3D volumetric voxel layers in QGIS 4 native engine. Online User Manual & Documentation: https://geophilo.com/planx_datacube/ | If you find this plugin helpful, please consider starring the repository on GitLab (https://gitlab.com/geophilo1/planx_datacube)!
+description=Spatiotemporal analysis engine for QGIS: CF-style data cubes, an interactive Cube Workbench, Emerging Hot Spot Analysis, time-series forecasting, and a 3D voxel preview.
+about=PlanX DataCube Lab brings a complete space-time pipeline to QGIS: aggregate events into a fishnet panel, build (X×Y×T×V) cubes from vector or raster time series, inspect them in an integrated heatmap / 3D voxel / per-cell series Workbench, run Emerging Hot Spot Analysis (EHSA) with 17 pattern classes, test local outliers and trends, and forecast future values with ARIMA, Random Forest or exponential smoothing. CF-style netCDF export records real time coordinates, cell bounds and CRS metadata so the cube is ready for downstream science. Online User Manual & Documentation: https://geophilo.com/planx_datacube/ | If you find this plugin helpful, please consider starring the repository on GitLab (https://gitlab.com/geophilo1/planx_datacube)!
 
 homepage=https://geophilo.com/planx_datacube/
 repository=https://gitlab.com/geophilo1/planx_datacube
@@ -22,6 +22,7 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 
 changelog=
+    1.4.0 - Cube Workbench: build a panel and CF-style netCDF cube in one action, then inspect a cells x time heatmap, animated isometric 3D voxel stack and per-cell series. Raster-stack input is now selectable in Build Data Cube (separate raster parameter); the cube builder writes real time coordinates, cell bounds and CRS metadata; long-format panel output feeds every analysis directly. Fixed QGIS block-edge no-data artefacts and replaced the unavailable native voxel API with an honest, dependency-free 3D preview.
     1.3.10 - Redesign plugin icon to high-end 3D tactile brand design with circular teal pedestal, zero margin, and refreshed documentation links.
     PlanX DataCube Lab 1.3.5 — Dependency panel no longer executes pip: the Copy Install Command button builds the exact install command for the QGIS Python and copies it to the clipboard; all process-spawning code removed and guarded by a regression test.
     PlanX DataCube Lab 1.3.1 — Fixed QGIS Hub security-scan block: removed accidentally-tracked .pytest_cache (false-positive high-entropy secret) and now gitignored, cleared all 9 remaining flake8 findings (W503/E261).

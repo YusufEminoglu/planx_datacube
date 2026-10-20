@@ -31,13 +31,11 @@ CARTO_LAB_DEPS: Dict[str, Tuple[str, bool, str]] = {
 
 DATA_CUBE_DEPS: Dict[str, Tuple[str, bool, str]] = {
     "numpy": ("numpy", True, "Multi-dimensional array backbone for data cubes"),
-    "netCDF4": ("netCDF4", True, "Read/write netCDF4 climate/earth-science data cubes"),
-    "statsmodels": ("statsmodels", True, "ARIMA / SARIMAX time-series models"),
-    "scikit-learn": ("sklearn", True, "Random Forest and ML-based time-series forecasting"),
-    "xarray": ("xarray", False, "Labelled multi-dimensional array analysis"),
-    "dask": ("dask", False, "Parallel out-of-core computation for large cubes"),
-    "zarr": ("zarr", False, "Chunked compressed storage format for netCDF alternatives"),
-    "matplotlib": ("matplotlib", False, "Chart preview visualization for forecasting studio"),
+    "netCDF4": ("netCDF4", False, "Read/write CF-style netCDF4 cubes and the Workbench loader"),
+    "statsmodels": ("statsmodels", False, "ARIMA / SARIMAX models; exponential smoothing is the fallback"),
+    "scikit-learn": ("sklearn", False, "Random Forest forecasting; exponential smoothing is the fallback"),
+    "zarr": ("zarr", False, "Optional chunked Zarr export"),
+    "matplotlib": ("matplotlib", False, "Chart preview visualization for the forecasting studio"),
 }
 
 

@@ -38,11 +38,13 @@ from qgis.PyQt.QtWidgets import (
     QSpinBox,
     QFormLayout,
 )
-from qgis.core import Qgis, QgsApplication, QgsProject
+from qgis.core import Qgis, QgsApplication, QgsMapLayer, QgsProject
+
+from .cube_view import CubeWorkbench
 
 
 IS_QGIS4 = int(getattr(Qgis, "QGIS_VERSION_INT", 0)) >= 40000
-DASHBOARD_SIZE = (1100, 760) if IS_QGIS4 else (1180, 800)
+DASHBOARD_SIZE = (1220, 820) if IS_QGIS4 else (1280, 860)
 DEFAULT_CARD_COLUMNS = 2 if IS_QGIS4 else 3
 
 # ── Algorithm catalogue ─────────────────────────────────────────────
@@ -112,7 +114,7 @@ class DataCubeDashboard(QDialog):
         self.iface = iface
         self.settings = QSettings()
         self.recent_runs: list[str] = []
-        self.card_widgets: list[QFrame] = []
+        self.card_widgets: list[QWidget] = []
         self._current_card_columns = DEFAULT_CARD_COLUMNS
         self.favorites: set[str] = set(
             self.settings.value("planx_datacube/favorites", [], type=list) or []
@@ -132,12 +134,13 @@ class DataCubeDashboard(QDialog):
         title_sz = 22 if IS_QGIS4 else 24
         self.setStyleSheet(f"""
             QDialog {{ background: #ecf3f4; font-family: "Segoe UI", "Inter", sans-serif; }}
+            QLabel {{ color: #17323a; }}
             QFrame#heroCard {{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #0d1b2a, stop:0.45 #1b2838, stop:1 #1b3a4b);
                 border-radius: {r}px; border: 1px solid #1a3a5c;
             }}
-            QLabel#heroTitle {{ color: #64b5f6; font-weight: 700; font-size: {title_sz}px; }}
-            QLabel#heroSub {{ color: #a0d2f0; font-size: 12px; }}
+            QLabel#heroTitle {{ color: #7fe0d4; font-weight: 700; font-size: {title_sz}px; }}
+            QLabel#heroSub {{ color: #a9c9d2; font-size: 12px; }}
             QLabel#statusChip {{
                 color: #0f2d3a; background: #f8d37a; border: 1px solid #e8bf58;
                 border-radius: 8px; padding: 4px 10px; font-weight: 700;
@@ -145,7 +148,9 @@ class DataCubeDashboard(QDialog):
             QTabWidget::pane {{ border: 1px solid #cfdee2; border-radius: {r}px; background: #ffffff; }}
             QTabBar::tab {{
                 background: #dce9ec; color: #183844; border: 1px solid #c4d6dc;
-                padding: 8px 14px; border-top-left-radius: 8px; border-top-right-radius: 8px; margin-right: 3px;
+                padding: 7px 10px; min-width: 82px; font-size: 11px;
+                border-top-left-radius: 8px; border-top-right-radius: 8px;
+                margin-right: 3px;
             }}
             QTabBar::tab:selected {{ background: #ffffff; font-weight: 700; border-color: #9bbac4; }}
             QTextBrowser {{
@@ -153,26 +158,43 @@ class DataCubeDashboard(QDialog):
                 padding: 9px; color: #17313a;
             }}
             QPushButton {{
-                background: #1565c0; color: #ffffff; border: 1px solid #0d47a1;
+                background: #167d73; color: #ffffff; border: 1px solid #11655d;
                 border-radius: {btn_r}px; padding: 7px 12px; font-weight: 600;
             }}
-            QPushButton:hover {{ background: #1976d2; }}
+            QPushButton:hover {{ background: #1b9489; }}
             QPushButton#ghost {{
-                background: #ffffff; color: #1565c0; border: 1px solid #b4ccd3;
+                background: #ffffff; color: #1d6f82; border: 1px solid #b9d0d7;
             }}
-            QPushButton#ghost:hover {{ background: #e3f2fd; }}
+            QPushButton#ghost:hover {{ background: #eef8f9; }}
             QPushButton#favBtn {{
-                background: #ffffff; color: #1565c0; border: 1px solid #c0d8e8;
+                background: #ffffff; color: #1d6f82; border: 1px solid #c0d8e8;
                 border-radius: 8px; padding: 2px 8px; font-weight: 700;
             }}
             QPushButton#favBtn:checked {{
-                background: #e3f2fd; color: #0d47a1; border: 1px solid #64b5f6;
+                background: #e6f7f5; color: #11655d; border: 1px solid #6cc7bb;
             }}
             QLineEdit {{
                 background: #ffffff; border: 1px solid #c9d9de; border-radius: 8px; padding: 6px; color: #17323a;
             }}
             QComboBox {{
                 background: #ffffff; border: 1px solid #c9d9de; border-radius: 8px; padding: 6px; color: #17323a;
+            }}
+            QSpinBox, QDoubleSpinBox {{
+                background: #ffffff; color: #17323a; border: 1px solid #c9d9de;
+                border-radius: 8px; padding: 3px 6px; min-height: 22px;
+            }}
+            QLineEdit:focus, QComboBox:focus, QDoubleSpinBox:focus, QSpinBox:focus {{
+                border: 1px solid #167d73;
+            }}
+            QListWidget {{
+                background: #ffffff; color: #17323a; border: 1px solid #c9d9de;
+                border-radius: 8px; padding: 3px;
+            }}
+            QListWidget::item {{ padding: 5px 7px; border-radius: 5px; }}
+            QListWidget::item:selected {{ background: #e6f7f5; color: #11655d; }}
+            QTextBrowser, QTextEdit {{
+                background: #ffffff; color: #17323a; border: 1px solid #d3e1e5;
+                border-radius: 8px; padding: 7px;
             }}
             QFrame[classCard="true"] {{
                 background: #fbfefe; border: 1px solid #d3e3e7; border-radius: {r}px;
@@ -197,10 +219,10 @@ class DataCubeDashboard(QDialog):
         gb = QGroupBox(title)
         gb.setFont(QFont("Inter, Segoe UI", 9, QFont.Weight.Bold))
         gb.setStyleSheet(
-            "QGroupBox { border: 1px solid #bbb; border-radius: 6px; "
-            "margin-top: 8px; padding: 8px; }"
+            "QGroupBox { border: 1px solid #c9d9de; border-radius: 9px; "
+            "margin-top: 10px; padding: 9px; background: #ffffff; }"
             "QGroupBox::title { subcontrol-origin: margin; left: 10px; "
-            "padding: 0 4px; }"
+            "padding: 0 4px; color: #173741; font-weight: 700; }"
         )
         return gb
 
@@ -218,7 +240,9 @@ class DataCubeDashboard(QDialog):
         ttl = QVBoxLayout()
         title = QLabel("PlanX DataCube Lab")
         title.setObjectName("heroTitle")
-        sub = QLabel("Spatiotemporal analysis engine: data cubes, emerging hot spots, time-series forecasting | Mekan-zaman analizi: veri kupleri, EHSA, tahminleme")
+        sub = QLabel(
+            "Spatiotemporal analysis engine — build a cube, inspect its "
+            "slices, then run EHSA, LISA, trend, anomaly and forecast tools.")
         sub.setObjectName("heroSub")
         ttl.addWidget(title)
         ttl.addWidget(sub)
@@ -230,14 +254,23 @@ class DataCubeDashboard(QDialog):
 
         # ── Tabs ──
         self.tabs = QTabWidget()
+        self.tabs.setElideMode(Qt.TextElideMode.ElideNone)
+        self.tabs.setUsesScrollButtons(False)
         root.addWidget(self.tabs, 1)
 
         # Overview tab
         self.overview = QTextBrowser()
+        self.overview.setOpenLinks(False)
+        self.overview.anchorClicked.connect(self._on_overview_link)
         self.tabs.addTab(self.overview, "Overview")
 
+        # Cube Workbench — build + inspect the space-time cube
+        self.workbench = CubeWorkbench(self.iface, self)
+        self.workbench.cubeBuilt.connect(self._show_workbench)
+        self.tabs.addTab(self.workbench, "Workbench")
+
         # Forecasting Studio tab
-        self.tabs.addTab(self._build_forecasting_studio_tab(), "Forecasting Studio")
+        self.tabs.addTab(self._build_forecasting_studio_tab(), "Forecasting")
 
         # Modules tab (card grid)
         mod_tab = QWidget()
@@ -268,13 +301,16 @@ class DataCubeDashboard(QDialog):
         self.cards_scroll = QScrollArea()
         self.cards_scroll.setWidgetResizable(True)
         cards_host = QWidget()
+        cards_host.setObjectName("cardsHost")
+        cards_host.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        cards_host.setStyleSheet("QWidget#cardsHost { background: #ffffff; }")
         self.cards_grid = QGridLayout(cards_host)
         self.cards_grid.setContentsMargins(4, 4, 4, 4)
         self.cards_grid.setHorizontalSpacing(8)
         self.cards_grid.setVerticalSpacing(8)
         self.cards_scroll.setWidget(cards_host)
         ml.addWidget(self.cards_scroll, 1)
-        self.tabs.addTab(mod_tab, "Modules")
+        self.tabs.addTab(mod_tab, "Algorithms")
 
         self._build_cards()
 
@@ -301,24 +337,95 @@ class DataCubeDashboard(QDialog):
         # Quick Actions tab
         qa_tab = QWidget()
         ql = QVBoxLayout(qa_tab)
-        ql.setContentsMargins(12, 12, 12, 12)
-        quick = [
-            ("Build Data Cube", lambda: self._run_algorithm("planx_datacube:create_data_cube", "Data Cube")),
-            ("Aggregate Space-Time Cube", lambda: self._run_algorithm("planx_datacube:space_time_cube", "Space-Time Cube")),
-            ("Run EHSA (Emerging Hot Spots)", lambda: self._run_algorithm("planx_datacube:emerging_hot_spot_analysis", "EHSA")),
-            ("Run Local Outlier Analysis (LISA)", lambda: self._run_algorithm("planx_datacube:local_morans_i", "Local Moran's I")),
-            ("Run Temporal Trend Analysis", lambda: self._run_algorithm("planx_datacube:temporal_trend", "Temporal Trend")),
-            ("Run Temporal Anomaly Detection", lambda: self._run_algorithm("planx_datacube:temporal_anomaly", "Anomaly")),
-            ("Run Time-Series Forecast", lambda: self._run_algorithm("planx_datacube:time_series_forecast", "Forecast")),
-            ("Run Forecast Backtest", lambda: self._run_algorithm("planx_datacube:forecast_backtest", "Backtest")),
-            ("Configure 3D Voxel Layer", self._on_voxel_config),
+        ql.setContentsMargins(14, 12, 14, 12)
+        qhead = QLabel("Quick actions")
+        qhead.setStyleSheet("font-size:18px; font-weight:700; color:#173741;")
+        ql.addWidget(qhead)
+        qsub = QLabel(
+            "Start with the Workbench, then run the analysis that fits your question. "
+            "Every action opens the Processing dialog with the current project context.")
+        qsub.setWordWrap(True)
+        qsub.setStyleSheet("color:#5b7a83; font-size:11px; margin-bottom:4px;")
+        ql.addWidget(qsub)
+
+        groups = [
+            ("Build & inspect", "#2f7aa8", [
+                ("Cube Workbench",
+                 "Build a panel and netCDF cube in one step, then inspect the heatmap, "
+                 "3-D voxel stack and per-cell series.", self._show_workbench, "Open Workbench"),
+                ("Build Data Cube",
+                 "Create an X×Y×T×V cube from ordered vector layers or a raster stack.",
+                 lambda: self._run_algorithm("planx_datacube:create_data_cube", "Data Cube"), "Run"),
+                ("Space-Time Cube",
+                 "Bin events into a fishnet × time-step panel for every analysis below.",
+                 lambda: self._run_algorithm("planx_datacube:space_time_cube", "Space-Time Cube"), "Run"),
+                ("Open netCDF",
+                 "Load an existing CF-style netCDF cube into the Workbench.",
+                 self._on_voxel_config, "Open"),
+            ]),
+            ("Spatiotemporal analysis", "#357a5f", [
+                ("Emerging Hot Spots",
+                 "Getis-Ord Gi* and Mann-Kendall classify 17 hot/cold-spot patterns.",
+                 lambda: self._run_algorithm("planx_datacube:emerging_hot_spot_analysis", "EHSA"), "Run"),
+                ("Local Moran's I",
+                 "Anselin LISA clusters and spatial outliers with conditional permutation.",
+                 lambda: self._run_algorithm("planx_datacube:local_morans_i", "Local Moran's I"), "Run"),
+                ("Temporal Trend",
+                 "Mann-Kendall significance and Theil-Sen slope for every cell.",
+                 lambda: self._run_algorithm("planx_datacube:temporal_trend", "Temporal Trend"), "Run"),
+                ("Temporal Anomaly",
+                 "Robust median/MAD z-scores flag unusual cell/time observations.",
+                 lambda: self._run_algorithm("planx_datacube:temporal_anomaly", "Anomaly"), "Run"),
+            ]),
+            ("Forecasting", "#7a5f9e", [
+                ("Time-Series Forecast",
+                 "Project each cell with ARIMA, Random Forest or exponential smoothing.",
+                 lambda: self._run_algorithm("planx_datacube:time_series_forecast", "Forecast"), "Run"),
+                ("Forecast Backtest",
+                 "Hold-out MAE / RMSE / MAPE ranks the methods before you project.",
+                 lambda: self._run_algorithm("planx_datacube:forecast_backtest", "Backtest"), "Run"),
+            ]),
         ]
-        for label, fn in quick:
-            b = QPushButton(label)
-            b.clicked.connect(fn)
-            ql.addWidget(b)
+
+        for group_title, accent, actions in groups:
+            glabel = QLabel(group_title)
+            glabel.setStyleSheet(
+                f"font-size:12px; font-weight:700; color:{accent}; margin-top:8px;")
+            ql.addWidget(glabel)
+            grid = QGridLayout()
+            grid.setHorizontalSpacing(9)
+            grid.setVerticalSpacing(9)
+            for pos, (label, desc, fn, verb) in enumerate(actions):
+                tile = QWidget()
+                tile.setObjectName("actionTile")
+                tile.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+                tile.setStyleSheet(
+                    "QWidget#actionTile { background:#ffffff; border:1px solid #dbe7ea; "
+                    f"border-left:4px solid {accent}; border-radius:10px; }}")
+                tv = QVBoxLayout(tile)
+                tv.setContentsMargins(11, 9, 11, 9)
+                tv.setSpacing(3)
+                title = QLabel(label)
+                title.setStyleSheet("font-weight:700; font-size:13px; color:#173741;")
+                text = QLabel(desc)
+                text.setWordWrap(True)
+                text.setStyleSheet("color:#5b7a83; font-size:11px;")
+                tv.addWidget(title)
+                tv.addWidget(text)
+                tv.addStretch(1)
+                row = QHBoxLayout()
+                row.addStretch()
+                btn = QPushButton(verb)
+                btn.setMinimumHeight(27)
+                if verb != "Open Workbench":
+                    btn.setObjectName("ghost")
+                btn.clicked.connect(fn)
+                row.addWidget(btn)
+                tv.addLayout(row)
+                grid.addWidget(tile, pos // 2, pos % 2)
+            ql.addLayout(grid)
         ql.addStretch()
-        self.tabs.addTab(qa_tab, "Quick Actions")
+        self.tabs.addTab(qa_tab, "Actions")
 
         # Layout tab
         self._build_layout_tab()
@@ -333,18 +440,18 @@ class DataCubeDashboard(QDialog):
         clear.setObjectName("ghost")
         clear.clicked.connect(self._clear_runlog)
         rl.addWidget(clear, 0, Qt.AlignmentFlag.AlignRight)
-        self.tabs.addTab(rl_tab, "Recent Runs")
+        self.tabs.addTab(rl_tab, "Runs")
 
         # System Health tab
         self.readiness = QTextBrowser()
-        self.tabs.addTab(self.readiness, "System Health")
+        self.tabs.addTab(self.readiness, "Health")
 
         # Footer
         footer = QHBoxLayout()
         refresh = QPushButton("Refresh")
         refresh.clicked.connect(self._refresh)
         footer.addWidget(refresh)
-        hint = QLabel("Tip: Build a Data Cube first, then run EHSA or Forecast on the panel data.")
+        hint = QLabel("Tip: build a panel in the Workbench, then run EHSA or Forecast on that panel.")
         hint.setStyleSheet("color:#35545f; font-size:11px;")
         footer.addWidget(hint, 1)
         root.addLayout(footer)
@@ -362,9 +469,13 @@ class DataCubeDashboard(QDialog):
         idx = 0
         for group, accent, items in ALGO_GROUPS:
             for title_txt, aid, desc in items:
-                card = QFrame()
-                card.setProperty("classCard", "true")
-                card.setStyleSheet(f"border-left: 3px solid {accent};")
+                card = QWidget()
+                card.setObjectName("algoCard")
+                card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+                card.setStyleSheet(
+                    "QWidget#algoCard { background: #ffffff; border: 1px solid #d9e6e9; "
+                    f"border-left: 4px solid {accent}; border-radius: 10px; }}"
+                )
                 v = QVBoxLayout(card)
                 v.setContentsMargins(10, 10, 10, 10)
 
@@ -383,7 +494,8 @@ class DataCubeDashboard(QDialog):
                 d.setWordWrap(True)
                 d.setStyleSheet("color:#294e58; font-size:12px;")
                 v.addWidget(m)
-                v.addWidget(d, 1)
+                v.addWidget(d)
+                v.addStretch(1)
 
                 fav = QPushButton("Fav")
                 fav.setObjectName("favBtn")
@@ -407,14 +519,17 @@ class DataCubeDashboard(QDialog):
                 self.cards_grid.addWidget(card, r, c)
                 self.card_widgets.append(card)
                 idx += 1
+        if hasattr(self, "card_count"):
+            self._filter_cards()
 
     def _cards_column_count(self) -> int:
         if not hasattr(self, "cards_scroll"):
             return DEFAULT_CARD_COLUMNS
         vp = self.cards_scroll.viewport()
-        width = vp.width() if vp else self.width() - 120
-        if width <= 0:
-            width = 1
+        viewport_width = vp.width() if vp else 0
+        # Before the dialog is shown the scroll viewport can still report its
+        # tiny layout-time width; fall back to the dialog width in that case.
+        width = max(viewport_width, self.width() - 120, 1)
         target = 420 if IS_QGIS4 else 380
         max_cols = 2 if IS_QGIS4 else 3
         return max(1, min(max_cols, width // target))
@@ -429,7 +544,7 @@ class DataCubeDashboard(QDialog):
             ok_g = (mg == grp) if grp else True
             ok_f = (card.algo_id in self.favorites) if fav_only else True
             card.setVisible(ok_q and ok_g and ok_f)
-        visible = sum(1 for c in self.card_widgets if c.isVisible())
+        visible = sum(1 for c in self.card_widgets if not c.isHidden())
         self.card_count.setText(f"Visible: {visible}/{len(self.card_widgets)}")
 
     def _toggle_favorite(self, algo_id: str, checked: bool) -> None:
@@ -501,7 +616,7 @@ class DataCubeDashboard(QDialog):
         gl.addWidget(btn_d)
         lyt.addWidget(gb)
         lyt.addStretch()
-        self.tabs.addTab(w, "Layout")
+        self.tabs.addTab(w, "Layouts")
 
     def _on_time_slice_stack(self, direction: str) -> None:
         items = self.ts_layer_list.selectedItems()
@@ -522,40 +637,28 @@ class DataCubeDashboard(QDialog):
         except Exception as exc:
             QMessageBox.critical(self, "Layout Error", str(exc))
 
-    def _on_voxel_config(self) -> None:
-        """Open the 3D voxel layer configuration dialog."""
-        try:
-            from ..ui.voxel_config_dialog import VoxelConfigDialog
-            dlg = VoxelConfigDialog(self)
-            if dlg.exec():
-                config = dlg.get_config()
-                nc_path = config["nc_path"]
+    def _show_workbench(self) -> None:
+        """Bring the integrated cube workbench to the front."""
+        self.tabs.setCurrentWidget(self.workbench)
+        self.workbench.refresh_layers()
 
-                # Check QGIS version to load native voxel layer
-                if IS_QGIS4:
-                    from qgis.core import QgsVoxelLayer, QgsProject
-                    # Use netcdf provider for QgsVoxelLayer
-                    layer = QgsVoxelLayer(nc_path, os.path.basename(nc_path), "netcdf")
-                    if layer.isValid():
-                        QgsProject.instance().addMapLayer(layer)
-                        self.iface.messageBar().pushSuccess(
-                            "DataCube Lab",
-                            f"Voxel layer '{layer.name()}' added successfully to the project."
-                        )
-                    else:
-                        QMessageBox.warning(
-                            self, "Voxel Layer Error",
-                            "Failed to load NetCDF file as a native QGIS 4 voxel layer.\n"
-                            "Please check if the NetCDF file structure is valid."
-                        )
-                else:
-                    self.iface.messageBar().pushInfo(
-                        "DataCube Lab",
-                        f"Voxel config saved. Voxel layers are supported in QGIS 4.x. "
-                        f"(Selected variable: {config['variable']})"
-                    )
-        except Exception as exc:
-            QMessageBox.critical(self, "Voxel Config Error", str(exc))
+    def _on_overview_link(self, url) -> None:
+        """Navigate from the Overview cards to the relevant tab."""
+        key = url.toString()
+        if key == "#workbench":
+            self._show_workbench()
+            return
+        target = {"#algorithms": "Algorithms", "#forecast": "Forecasting"}.get(key)
+        if target:
+            for i in range(self.tabs.count()):
+                if self.tabs.tabText(i) == target:
+                    self.tabs.setCurrentIndex(i)
+                    return
+
+    def _on_voxel_config(self) -> None:
+        """Open a netCDF cube in the integrated 3-D workbench."""
+        self._show_workbench()
+        self.workbench.load_netcdf()
 
     def _on_copy_diagnostics(self) -> None:
         """Copy project diagnostics to clipboard."""
@@ -580,6 +683,10 @@ class DataCubeDashboard(QDialog):
     # ── System health / refresh ──────────────────────────────────────
 
     def _refresh(self) -> None:
+        if hasattr(self, "cards_scroll"):
+            desired = self._cards_column_count()
+            if desired != self._current_card_columns:
+                self._build_cards()
         layers = list(QgsProject.instance().mapLayers().values())
         reg = QgsApplication.processingRegistry()
         missing = [aid for aid in REQUIRED_IDS if reg.algorithmById(aid) is None]
@@ -597,8 +704,8 @@ class DataCubeDashboard(QDialog):
             card.status_lbl.style().polish(card.status_lbl)
 
         ready = len(missing) == 0
-        status = "ALL READY" if ready else f"MISSING: {len(missing)}"
-        self.status_chip.setText(f"System: {status}")
+        status = "ALL READY" if ready else f"{len(missing)} MISSING"
+        self.status_chip.setText(f"System · {status}")
         if ready:
             self.status_chip.setStyleSheet(
                 "color:#0f2d3a;background:#9fdfbf;border:1px solid #6fc995;border-radius:8px;padding:4px 10px;font-weight:700;"
@@ -620,15 +727,95 @@ class DataCubeDashboard(QDialog):
             cat_rows.append((gname, found, total, pct))
         score = 100 * cat_ok_total / cat_total if cat_total else 0
 
+        cube_state = "idle — no cube loaded"
+        if hasattr(self, "workbench") and self.workbench.grid is not None:
+            cg = self.workbench.grid
+            cube_state = (f"{cg.n_cells:,} cells × {cg.n_times:,} time steps")
+        catalog_rows = []
+        for group, accent, items in ALGO_GROUPS:
+            for title_txt, aid, _desc in items:
+                catalog_rows.append(
+                    "<tr>"
+                    f"<td style='border-bottom:1px solid #e2ecef;padding:5px 7px;'>"
+                    f"<b style='color:#173741;'>{title_txt}</b></td>"
+                    f"<td style='border-bottom:1px solid #e2ecef;padding:5px 7px;"
+                    f"color:#5b7a83;font-size:11px;'>{group}</td>"
+                    f"<td style='border-bottom:1px solid #e2ecef;padding:5px 7px;"
+                    f"color:#1d6f82;font-size:10px;'>{aid}</td>"
+                    "</tr>"
+                )
         self.overview.setHtml(
-            "<h2>PlanX DataCube Lab</h2>"
-            "<p><b>Spatiotemporal analysis engine for QGIS.</b> Build multi-dimensional "
-            "data cubes from vector/raster time series, run Emerging Hot Spot Analysis "
-            "(17 pattern classes), and forecast future values with ARIMA / Random Forest.</p>"
-            f"<p><b>Loaded layers:</b> {len(layers)}</p>"
-            f"<p><b>System health:</b> {score:.0f}% ({cat_ok_total}/{cat_total} algorithms)</p>" +
-            (f"<p><b>Missing:</b> {', '.join(missing)}</p>" if missing else "<p>All modules ready.</p>") +
-            "<p><b>Get started:</b> Open <b>Modules</b>, pick an algorithm, and click <b>Run</b>.</p>"
+            "<div style='font-family:Segoe UI; color:#17313a;'>"
+            "<h1 style='color:#0d3b4a; margin:0 0 2px 0;'>PlanX DataCube Lab</h1>"
+            "<p style='color:#4d6c75; margin:0 0 14px 0;'>"
+            "A complete space–time pipeline for QGIS: events → fishnet panel → "
+            "multi-dimensional cube → hot spots, outliers, trends, anomalies and forecasts.</p>"
+
+            "<table cellspacing='7' cellpadding='10' width='100%' style='border-collapse:separate;'>"
+            "<tr>"
+            "<td width='20%' style='background:#eef8f7; border-left:3px solid #1f9e89;'>"
+            "<b style='color:#11655d;'>1 · Aggregate</b><br>"
+            "<span style='color:#46646d;'>Bin events into a fishnet × time panel.</span></td>"
+            "<td width='20%' style='background:#eef5fa; border-left:3px solid #2f7aa8;'>"
+            "<b style='color:#1c5d84;'>2 · Build</b><br>"
+            "<span style='color:#46646d;'>Write a CF-style netCDF X×Y×T×V cube.</span></td>"
+            "<td width='20%' style='background:#f4f2fa; border-left:3px solid #7a5f9e;'>"
+            "<b style='color:#5a4380;'>3 · Analyze</b><br>"
+            "<span style='color:#46646d;'>EHSA, LISA, trend and anomaly.</span></td>"
+            "<td width='20%' style='background:#fbf7ea; border-left:3px solid #d9a62e;'>"
+            "<b style='color:#8a6411;'>4 · Forecast</b><br>"
+            "<span style='color:#46646d;'>Backtest, then project each cell.</span></td>"
+            "<td width='20%' style='background:#fbf1ec; border-left:3px solid #e4572e;'>"
+            "<b style='color:#a33a1b;'>5 · Inspect</b><br>"
+            "<span style='color:#46646d;'>Heatmap, 3-D voxels and sparklines.</span></td>"
+            "</tr></table>"
+
+            f"<p><b>Project layers:</b> {len(layers)} &nbsp;·&nbsp; "
+            f"<b>Algorithms ready:</b> {len(REQUIRED_IDS) - len(missing)}/{len(REQUIRED_IDS)} "
+            f"({score:.0f}%) &nbsp;·&nbsp; <b>Cube workbench:</b> {cube_state}</p>" +
+            (f"<p style='color:#a33a1b;'><b>Missing algorithms:</b> {', '.join(missing)}</p>"
+             if missing else
+             "<p style='color:#11655d;'><b>All eight algorithms are registered.</b></p>") +
+
+            "<h3 style='color:#0d3b4a; margin-bottom:4px;'>Start here</h3>"
+            "<p>"
+            "<a href='#workbench' style='color:#11655d; font-weight:700;'>Open Cube Workbench →</a>"
+            " &nbsp;&nbsp; "
+            "<a href='#algorithms' style='color:#1c5d84; font-weight:700;'>Browse algorithms →</a>"
+            " &nbsp;&nbsp; "
+            "<a href='#forecast' style='color:#5a4380; font-weight:700;'>Forecast a cell →</a>"
+            "</p>"
+            "<p style='color:#6a858d; font-size:11px;'>Tip: the Workbench builds a panel "
+            "layer and a netCDF cube in one step; every analysis tool then reads that panel.</p>"
+
+            "<h3 style='color:#0d3b4a; margin:16px 0 4px 0;'>Inside the Workbench</h3>"
+            "<table cellspacing='7' cellpadding='9' width='100%' style='border-collapse:separate;'>"
+            "<tr>"
+            "<td width='33%' style='background:#f7fbfc; border:1px solid #d6e3e7; border-radius:9px;'>"
+            "<b style='color:#11655d;'>Space–time heatmap</b><br>"
+            "<span style='color:#4d6c75;'>Every cell as a row, every time step as a column; "
+            "hover for values, click to select a cell.</span></td>"
+            "<td width='33%' style='background:#f7fbfc; border:1px solid #d6e3e7; border-radius:9px;'>"
+            "<b style='color:#1c5d84;'>3-D voxel stack</b><br>"
+            "<span style='color:#4d6c75;'>An isometric stack of time slices with the current "
+            "slice extruded by value; scrub or play the timeline.</span></td>"
+            "<td width='33%' style='background:#f7fbfc; border:1px solid #d6e3e7; border-radius:9px;'>"
+            "<b style='color:#5a4380;'>Cell series</b><br>"
+            "<span style='color:#4d6c75;'>The selected cell's full series with the current "
+            "time marker and mean reference line.</span></td>"
+            "</tr></table>"
+
+            "<h3 style='color:#0d3b4a; margin:16px 0 4px 0;'>Algorithm catalogue</h3>"
+            "<table style='border-collapse:collapse;width:100%;'>"
+            "<tr><th style='text-align:left;border-bottom:1px solid #c9d9de;padding:5px 7px;"
+            "color:#5b7a83;font-size:10px;'>ALGORITHM</th>"
+            "<th style='text-align:left;border-bottom:1px solid #c9d9de;padding:5px 7px;"
+            "color:#5b7a83;font-size:10px;'>GROUP</th>"
+            "<th style='text-align:left;border-bottom:1px solid #c9d9de;padding:5px 7px;"
+            "color:#5b7a83;font-size:10px;'>PROCESSING ID</th></tr>" +
+            "".join(catalog_rows) +
+            "</table>"
+            "</div>"
         )
 
         cat_table = [
@@ -657,6 +844,8 @@ class DataCubeDashboard(QDialog):
         self._refresh_runlog()
         self._filter_cards()
         self._populate_fc_layers()
+        if hasattr(self, "workbench"):
+            self.workbench.refresh_layers()
 
     # ── Dependency management ────────────────────────────────────────
 
@@ -756,7 +945,7 @@ class DataCubeDashboard(QDialog):
 
         left_lyt.addWidget(gb)
 
-        btn_run = QPushButton("Run Forecast & Plot")
+        btn_run = QPushButton("Run Forecast and Plot")
         btn_run.clicked.connect(self._on_run_studio_forecast)
         left_lyt.addWidget(btn_run)
 
@@ -792,11 +981,19 @@ class DataCubeDashboard(QDialog):
     def _populate_fc_layers(self) -> None:
         if not hasattr(self, "fc_layer_combo"):
             return
+        current = self.fc_layer_combo.currentData()
+        self.fc_layer_combo.blockSignals(True)
         self.fc_layer_combo.clear()
-        layers = QgsProject.instance().mapLayers().values()
-        for layer in layers:
-            if layer.type() == 0 or (hasattr(layer, 'type') and layer.type() == 0):
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.type() == QgsMapLayer.LayerType.VectorLayer:
                 self.fc_layer_combo.addItem(layer.name(), layer.id())
+        if current:
+            idx = self.fc_layer_combo.findData(current)
+            if idx >= 0:
+                self.fc_layer_combo.setCurrentIndex(idx)
+        self.fc_layer_combo.blockSignals(False)
+        if self.fc_layer_combo.count() and self.fc_id_field_combo.count() == 0:
+            self._on_fc_layer_changed()
 
     def _on_fc_layer_changed(self) -> None:
         if not hasattr(self, "fc_layer_combo") or self.fc_layer_combo.currentIndex() == -1:
@@ -816,12 +1013,17 @@ class DataCubeDashboard(QDialog):
             self.fc_time_field_combo.addItem(name)
             self.fc_val_field_combo.addItem(name)
 
-        # set some default selections if possible
-        idx_t = self.fc_time_field_combo.findText("year")
-        if idx_t == -1:
-            idx_t = self.fc_time_field_combo.findText("time")
-        if idx_t != -1:
-            self.fc_time_field_combo.setCurrentIndex(idx_t)
+        for combo, candidates in (
+            (self.fc_id_field_combo, ("cell_id", "location_id", "loc_id", "id")),
+            (self.fc_time_field_combo, ("time_step", "time_value", "time", "year")),
+            (self.fc_val_field_combo, ("value", "count", "pop", "population")),
+        ):
+            for candidate in candidates:
+                idx = combo.findText(candidate)
+                if idx >= 0:
+                    combo.setCurrentIndex(idx)
+                    break
+        self._on_fc_id_field_changed()
 
     def _on_fc_id_field_changed(self) -> None:
         if not hasattr(self, "fc_id_field_combo") or self.fc_id_field_combo.currentIndex() == -1:
