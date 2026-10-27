@@ -4,10 +4,12 @@ version=1.4.0
 hasProcessingProvider=yes
 
 category=Processing
-tags=spatiotemporal, data cube, emerging hot spot, time series, forecasting, netcdf, cf, voxel, planx
+tags=spatiotemporal,data cube,emerging hot spot,time series,forecasting,netcdf,cf,voxel,planx,space-time,ehsa,arima,geophilo
 
-description=Spatiotemporal analysis engine for QGIS: CF-style data cubes, an interactive Cube Workbench, Emerging Hot Spot Analysis, time-series forecasting, and a 3D voxel preview.
-about=PlanX DataCube Lab brings a complete space-time pipeline to QGIS: aggregate events into a fishnet panel, build (X×Y×T×V) cubes from vector or raster time series, inspect them in an integrated heatmap / 3D voxel / per-cell series Workbench, run Emerging Hot Spot Analysis (EHSA) with 17 pattern classes, test local outliers and trends, and forecast future values with ARIMA, Random Forest or exponential smoothing. CF-style netCDF export records real time coordinates, cell bounds and CRS metadata so the cube is ready for downstream science. Online User Manual & Documentation: https://geophilo.com/planx_datacube/ | If you find this plugin helpful, please consider starring the repository on GitLab (https://gitlab.com/geophilo1/planx_datacube)!
+description=Space-time analysis in QGIS: build data cubes from event points, vector or raster time series, find emerging hot spots, forecast each cell and explore the cube as a 3D voxel view.
+about=DataCube Lab answers the question a single map cannot: where is something getting hotter, cooling down or appearing for the first time? It aggregates events into a fishnet panel or builds an X×Y×T cube from vector or raster time series, then lets you inspect it as a heatmap, a 3D voxel stack or a per-cell series in the Cube Workbench.
+    Emerging Hot Spot Analysis sorts every cell into one of 17 pattern classes, local outlier and trend tests show where the change is significant, and ARIMA, random forest or exponential smoothing forecast the next periods. Cubes export to CF-style netCDF with real time coordinates, cell bounds and CRS, ready for further work.
+    Manual: https://geophilo.com/planx_datacube/manual.html
 
 homepage=https://geophilo.com/planx_datacube/
 repository=https://gitlab.com/geophilo1/planx_datacube
