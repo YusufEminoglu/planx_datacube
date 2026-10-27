@@ -1,5 +1,5 @@
 [general]
-name=PlanX DataCube Lab
+name=DataCube Lab
 version=1.4.0
 hasProcessingProvider=yes
 
@@ -13,7 +13,7 @@ homepage=https://geophilo.com/planx_datacube/
 repository=https://gitlab.com/geophilo1/planx_datacube
 tracker=https://gitlab.com/geophilo1/planx_datacube/-/issues
 
-author=Yusuf Eminoglu
+author=Geophilo
 email=yusuf.eminoglu@deu.edu.tr
 
 icon=icons/icon.png
